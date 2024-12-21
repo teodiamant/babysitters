@@ -1,15 +1,12 @@
-import './index.css';
-import React, { useEffect, useState } from 'react';
-import { FIREBASE_AUTH , FIREBASE_DB} from '../../config/firebase';
+import React, { useEffect, useState, useCallback } from 'react';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
-
-
 export default function Profile() {
     const [email, setEmail] = useState(null);
-    const [userId, setUserId] = useState(null); // Store the user ID
+    const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -17,28 +14,40 @@ export default function Profile() {
     const [firstName, setFirstName] = useState('');
     const [age, setAge] = useState('');
     const [formMessage, setFormMessage] = useState('');
-    const [userData, setUserData] = useState([]); // State for fetched user data
+    const [userData, setUserData] = useState([]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
             if (user) {
                 setEmail(user.email);
-                setUserId(user.uid); // Store the user's UID
+                setUserId(user.uid);
             } else {
                 setEmail(null);
                 setUserId(null);
             }
             setLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
-    useEffect(() => {
-        if (userId) {
-            fetchUserData(); // Fetch user data only after the user_id is available
+    const fetchUserData = useCallback(async () => {
+        if (!userId) return; // Early exit if userId is not set
+        try {
+            const q = query(collection(FIREBASE_DB, 'user'), where('userId', '==', userId));
+            const querySnapshot = await getDocs(q);
+            const users = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setUserData(users);
+        } catch (error) {
+            console.error('Error fetching user data:', error);
         }
     }, [userId]);
+
+    useEffect(() => {
+        fetchUserData();
+    }, [fetchUserData]);
 
     const handleLogout = async () => {
         try {
@@ -52,18 +61,17 @@ export default function Profile() {
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         setFormMessage('');
-        
+
         try {
             const payload = {
-                amka: amka,
-                firstName: firstName,
-                age: parseInt(age),
-                userId: userId, // Add the user's UID
+                amka,
+                firstName,
+                age: parseInt(age, 10),
+                userId,
                 createdAt: new Date(),
-            }
-            
-            await addDoc(collection(FIREBASE_DB, 'user'), payload);
+            };
 
+            await addDoc(collection(FIREBASE_DB, 'user'), payload);
             setFormMessage('Data submitted successfully!');
             setAmka('');
             setFirstName('');
@@ -75,26 +83,12 @@ export default function Profile() {
         }
     };
 
-    const fetchUserData = async () => {
-        try {
-            const q = query(collection(FIREBASE_DB, 'user'), where('userId', '==', userId)); // Query only data matching the user's UID
-            const querySnapshot = await getDocs(q);
-            const users = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setUserData(users);
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-        }
-    };
-
     if (loading) {
         return <div>Loading...</div>;
     }
 
     return (
-        <div className='courses'>
+        <div className='profile'>
             <h1>Welcome</h1>
             {email ? <p>Your email: {email}</p> : <p>No user logged in</p>}
             <button onClick={handleLogout}>Logout</button>

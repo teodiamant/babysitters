@@ -95,7 +95,7 @@ export default function Register() {
                     </Button>
                     <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
                         Already have an account? {' '}
-                        <Link component={RouterLink} to="/" sx={{ fontWeight: 'bold' }}>
+                        <Link component={RouterLink} to="/login" sx={{ fontWeight: 'bold' }}>
                             Sign in
                         </Link>
                     </Typography>
