@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import { Container, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { DatePicker, LocalizationProvider } from '@mui/lab';
-import AdapterDateFns from '@date-io/date-fns';
 
 function HomePage() {
-    const [selectedLocation, setSelectedLocation] = useState('');
-    const [date, setDate] = useState(new Date());
+    const [location, setLocation] = useState('');
+    const [date, setDate] = useState('');  // Use a string in 'YYYY-MM-DD' format for date input
     const [duration, setDuration] = useState('');
 
-    const isFormValid = selectedLocation && date && duration;
-
     const handleSearch = () => {
-        console.log('Searching for:', { selectedLocation, date, duration });
+        console.log('Searching for:', { location, date, duration });
         // Implement search logic here
     };
 
@@ -23,9 +19,9 @@ function HomePage() {
                 <Select
                     labelId="location-label"
                     id="location"
-                    value={selectedLocation}
+                    value={location}
                     label="Location"
-                    onChange={e => setSelectedLocation(e.target.value)}
+                    onChange={e => setLocation(e.target.value)}
                 >
                     <MenuItem value="">
                         <em>None</em>
@@ -34,14 +30,19 @@ function HomePage() {
                     <MenuItem value="Thessaloniki">Thessaloniki</MenuItem>
                 </Select>
             </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                    label="Start Date"
-                    value={date}
-                    onChange={setDate}
-                    renderInput={(params) => <TextField {...params} />}
-                />
-            </LocalizationProvider>
+            
+            <TextField
+                fullWidth
+                label="Start Date"
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                InputLabelProps={{
+                    shrink: true,
+                }}
+                sx={{ mt: 2, mb: 2 }}
+            />
+
             <TextField
                 fullWidth
                 label="Duration (months)"
@@ -50,12 +51,8 @@ function HomePage() {
                 onChange={e => setDuration(e.target.value)}
                 sx={{ mt: 2, mb: 2 }}
             />
-            <Button
-                variant="contained"
-                onClick={handleSearch}
-                disabled={!isFormValid} // Disable button if form is not valid
-                sx={{ mb: 2 }}
-            >
+            
+            <Button variant="contained" onClick={handleSearch} sx={{ mb: 2 }}>
                 Search
             </Button>
         </Container>
