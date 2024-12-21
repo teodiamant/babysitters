@@ -29,10 +29,22 @@ export default function Register() {
         try {
             const res = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
             console.log('User registered:', res.user);
+            alert('Registration successful! Redirecting to homepage.');
             navigate('/'); // Navigate to homepage on success
         } catch (error) {
-            console.error(error);
-            alert('Failed to register. ' + error.message);
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    alert('This email is already registered.');
+                    break;
+                case 'auth/invalid-email':
+                    alert('Please enter a valid email address.');
+                    break;
+                case 'auth/weak-password':
+                    alert('Password should be at least 6 characters long.');
+                    break;
+                default:
+                    alert('Failed to register. Please try again later.');
+            }
         } finally {
             setLoading(false);
         }
@@ -63,6 +75,8 @@ export default function Register() {
                         autoFocus
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
+                        aria-label="Email Address"
                     />
                     <TextField
                         margin="normal"
@@ -75,6 +89,8 @@ export default function Register() {
                         autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        aria-label="Password"
                     />
                     <Button
                         type="submit"
@@ -82,19 +98,19 @@ export default function Register() {
                         variant="contained"
                         color="primary"
                         sx={{
-                          mt: 3,
-                          mb: 2,
-                          bgcolor: '#004951',  // Button color as specified
-                          '&:hover': {
-                              bgcolor: '#003d43'  // Slightly darker on hover
-                          }
-                      }}
+                            mt: 3,
+                            mb: 2,
+                            bgcolor: '#004951',
+                            '&:hover': {
+                                bgcolor: '#003d43',
+                            },
+                        }}
                         disabled={loading}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Register'}
                     </Button>
                     <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
-                        Already have an account? {' '}
+                        Already have an account?{' '}
                         <Link component={RouterLink} to="/login" sx={{ fontWeight: 'bold' }}>
                             Sign in
                         </Link>
