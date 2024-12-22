@@ -9,6 +9,9 @@ import NavBar from './component/NavBar/NavBar';
 import Homepage from './component/Homepage/Homepage';
 import FAQsPage1 from './component/FAQs/FAQsLandingPage';
 import FAQsPage2 from './component/FAQs/FAQsPage';
+import SpecificationsPage from './component/Footer/SpecificationsPage';
+import TermsPage from './component/Footer/TermsPage';
+import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
 
 
 //hey Giannh!!
@@ -28,6 +31,10 @@ function App() {
           <Route path="/faqs" element={<FAQsPage1 />} />
           <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
           <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
+          <Route path="/about" element={<WhatIsBabysitters />} />
+          <Route path="/faqs" element={<FAQsPage2 />} />
+          <Route path="/specifications" element={<SpecificationsPage />} />
+          <Route path="/terms" element={<TermsPage />} />
  
         </Routes>
         <Footer/>

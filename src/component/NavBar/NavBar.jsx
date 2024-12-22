@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText } from '@mui/material';
+import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import logo from '../../images/teo_logo.jpg';
@@ -15,8 +15,8 @@ const NavBar = () => {
         setDrawerOpen(open);
     };
 
-    // Navigation Links
-    const navLinks = ['Home', 'About', 'Services', 'Contact', 'Sign In', 'Sign Up'];
+    // Navigation Links (excluding Sign In/Sign Up)
+    const navLinks = ['Home', 'About', 'Services', 'Contact'];
 
     return (
         <AppBar position="static" sx={{ bgcolor: '#d5caac' }}>
@@ -44,60 +44,70 @@ const NavBar = () => {
                         }}
                     />
                 </IconButton>
-                {/* Babysitters.com Text */}
+
+                {/* Babysitters Text */}
                 <Typography
                     component={RouterLink}
                     to="/"
                     sx={{
-                        ml: -1, // Adjust margin to move it to the right of the logo
-                        fontFamily: "'Pacifico', cursive", // Apply the Pacifico font
-                        fontSize: '1.5rem', // Adjust font size
-                        color: '#4c3b34', // Text color
-                        textDecoration: 'none', // Remove underline
+                        ml: -1,
+                        fontFamily: "'Pacifico', cursive",
+                        fontSize: '1.5rem',
+                        color: '#4c3b34',
+                        textDecoration: 'none',
                     }}
                 >
                     Babysitters
                 </Typography>
-                {/* Navigation Buttons for Larger Screens */}
-                <div className="nav-buttons" sx={{ display: { xs: 'none', sm: 'block' }, ml: 'auto' }}>
+
+                {/* Navigation Links */}
+                <Box sx={{ display: 'flex', ml: 'auto', gap: 2 }}>
                     {navLinks.map((label) => (
                         <Button
                             key={label}
-                            variant={['Sign In', 'Sign Up'].includes(label) ? 'contained' : 'outlined'} // Standout Sign In and Sign Up buttons
-                            color={label === 'Sign Up' ? 'primary' : label === 'Sign In' ? 'secondary' : 'inherit'}
                             component={RouterLink}
-                            to={`/${label.toLowerCase().replace(' ', '')}`}
+                            to={`/${label.toLowerCase()}`}
                             sx={{
-                                mx: 1, // Margin between buttons
-                                color:
-                                    label === 'Sign Up'
-                                        ? 'white' // Button text color for Sign Up
-                                        : label === 'Sign In'
-                                        ? 'white' // Button text color for Sign In
-                                        : '#004951',
-                                bgcolor:
-                                    label === 'Sign In'
-                                        ? '#f3b2ac' // Background color for Sign In
-                                        : label === 'Sign Up'
-                                        ? '#795e53' // Background color for Sign Up
-                                        : 'transparent',
-                                borderColor: '#004951',
-                                '&:hover': {
-                                    backgroundColor:
-                                        label === 'Sign Up'
-                                            ? '#4c3b34' // Hover background for Sign Up
-                                            : label === 'Sign In'
-                                            ? '#e76052' // Hover background for Sign In
-                                            : '#d5caac',
-                                    borderColor: '#004951',
-                                    color: label === 'Sign Up' || label === 'Sign In' ? 'white' : '#004951',
-                                },
+                                color: '#004951',
+                                '&:hover': { color: '#003d43' },
+                                textTransform: 'capitalize',
                             }}
                         >
                             {label}
                         </Button>
                     ))}
-                </div>
+                </Box>
+
+                {/* Sign In and Sign Up Buttons */}
+                <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                    {/* Sign In */}
+                    <Button
+                        component={RouterLink}
+                        to="/login"
+                        variant="contained"
+                        sx={{
+                            color: 'white',
+                            bgcolor: '#f3b2ac', // Background color for Sign In
+                            '&:hover': { bgcolor: '#bba0ee' }, // Hover color for Sign In
+                        }}
+                    >
+                        Sign In
+                    </Button>
+                    {/* Sign Up */}
+                    <Button
+                        component={RouterLink}
+                        to="/register"
+                        variant="contained"
+                        sx={{
+                            color: 'white',
+                            bgcolor: '#795e53', // Background color for Sign Up
+                            '&:hover': { bgcolor: '#4c3b34' }, // Hover color for Sign Up
+                        }}
+                    >
+                        Sign Up
+                    </Button>
+                </Box>
+
                 {/* Hamburger Menu for Smaller Screens */}
                 <IconButton
                     edge="end"
@@ -109,10 +119,11 @@ const NavBar = () => {
                     <MenuIcon />
                 </IconButton>
             </Toolbar>
+
             {/* Drawer for Small Screens */}
             <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
                 <List sx={{ width: 250 }}>
-                    {navLinks.map((label) => (
+                    {[...navLinks, 'Sign In', 'Sign Up'].map((label) => (
                         <ListItem
                             button
                             key={label}
