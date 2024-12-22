@@ -31,9 +31,9 @@ const FAQsLandingPage = () => {
             <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
                 Frequently Asked Questions
             </Typography>
-            <Grid container spacing={4} justifyContent="center">
+            <Grid container spacing={4} justifyContent="space-evenly">
                 {boxes.map((box, index) => (
-                    <Grid item xs={12} sm={6} key={index}>
+                    <Grid item xs={12} sm={5} key={index}>
                         <Link href={box.href} underline="none">
                             <Box
                                 sx={{
