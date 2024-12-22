@@ -1,5 +1,14 @@
 .App {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.main {
+  flex: 1;
+}
+.Footer {
+  flex-shrink: 0; /* Optional: Prevent the footer from shrinking if content is too large */
 }
 
 .App-logo {

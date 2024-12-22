@@ -12,7 +12,7 @@ function HomePage() {
     };
 
     return (
-        <Container maxWidth="md">
+        <Container maxWidth="md" >
             <Typography variant="h4" sx={{ mt: 4, mb: 2 }}>Find a Babysitter</Typography>
             <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="location-label">Location</InputLabel>

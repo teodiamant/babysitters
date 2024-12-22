@@ -23,6 +23,7 @@ function App() {
     <div className="App">
       <BrowserRouter>
       <NavBar />
+      <div className="main">
         <Routes>
         <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
           <Route path="profile" element={<Profile/>} />
@@ -35,8 +36,9 @@ function App() {
           <Route path="/faqs" element={<FAQsPage2 />} />
           <Route path="/specifications" element={<SpecificationsPage />} />
           <Route path="/terms" element={<TermsPage />} />
- 
+
         </Routes>
+        </div>
         <Footer/>
       </BrowserRouter>
     </div>
