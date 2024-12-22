@@ -121,11 +121,50 @@
 //     );
 // }
 
-
 import React, { useState } from 'react';
-import { Container, TextField, Button, Stepper, Step, StepLabel, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Container, TextField, Button, Stepper, Step, StepLabel, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { FIREBASE_AUTH } from '../../config/firebase';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
+import { collection, addDoc , doc, setDoc} from 'firebase/firestore';
+import { FIREBASE_DB as db } from '../../config/firebase';
+
+
+
+const ConfirmDetails = ({ userData }) => (
+  <List>
+    <ListItem>
+      <ListItemText primary="First Name" secondary={userData.firstName} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Last Name" secondary={userData.lastName} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Email" secondary={userData.email} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Address" secondary={userData.address} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Area" secondary={userData.area} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Postal Code" secondary={userData.postalCode} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="AMKA" secondary={userData.amka} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Extra Information" secondary={userData.extraInfo} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Document Uploaded" secondary={userData.document ? 'Yes' : 'No'} />
+    </ListItem>
+    <ListItem>
+      <ListItemText primary="Photo Uploaded" secondary={userData.photo ? 'Yes' : 'No'} />
+    </ListItem>
+  </List>
+);
 
 export default function Register() {
     const [activeStep, setActiveStep] = useState(0);
@@ -142,6 +181,44 @@ export default function Register() {
         photo: null,
         document: null
     });
+    const navigate = useNavigate();
+
+    // const handleConfirmRegistration = () => {
+    //     navigate('/profile'); // Add the correct route as per your routing setup
+    // };
+    const handleConfirmRegistration = async (userData) => {
+        const navigate = useNavigate();
+        const [loading, setLoading] = useState(false); // Manage loading state
+    
+        setLoading(true);
+        try {
+            // Creating user with email and password via Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, userData.email, userData.password);
+            console.log("Firebase Auth User created:", userCredential.user);
+    
+            // Adding additional user data to Firestore
+            await setDoc(doc(FIREBASE_DB, "users", userCredential.user.uid), {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                address: userData.address,
+                email: userData.email,
+                password: userData.password,
+                area: userData.area,
+                postalCode: userData.postalCode,
+                amka: userData.amka,
+                address: userData.address,
+                extraInfo: userData.extraInfo
+            });
+    
+            console.log("User data saved to Firestore successfully!");
+            navigate('/profile'); // Navigate to profile page on successful registration
+        } catch (error) {
+            console.error("Error in user registration or data saving:", error);
+            // Optionally display error messages to the user
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleNext = () => {
         if (activeStep === 2) {
@@ -169,8 +246,9 @@ export default function Register() {
         try {
             const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
             console.log("Registration successful, user ID:", userCredential.user.uid);
-            // Here you would redirect to profile or home page
-            setActiveStep(0); // Reset stepper on successful registration
+            //setActiveStep(0); 
+            await addDoc(collection(db, "users"), userData);
+            navigate('/profile'); // Navigate to profile on successful registration
         } catch (error) {
             console.error("Registration failed:", error);
         }
@@ -209,13 +287,15 @@ export default function Register() {
                 )}
                 {activeStep === 2 && (
                     <Typography>
-                        Confirm your details and submit to complete registration.
+                        <ConfirmDetails userData={userData} />
+                        <Button onClick={handleConfirmRegistration}disabled={loading}>Confirm Registration</Button>
                     </Typography>
                 )}
                 <Button disabled={activeStep === 0} onClick={handleBack}>Back</Button>
                 <Button variant="contained" onClick={handleNext}>
                     {activeStep === steps.length - 1 ? 'Confirm & Register' : 'Next'}
                 </Button>
+                
             </form>
         </Container>
     );
