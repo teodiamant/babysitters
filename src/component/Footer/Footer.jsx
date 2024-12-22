@@ -36,7 +36,6 @@ const Footer = () => (
                         variant="h6"
                         color="text.primary"
                         sx={{
-                            ml: 0, // Adjust margin to move it to the right of the logo
                             fontFamily: "'Pacifico', cursive", // Apply the Pacifico font
                             fontSize: '1.5rem', // Adjust font size
                             color: '#4c3b34', // Text color
@@ -81,7 +80,7 @@ const Footer = () => (
                 >
                     More Information
                 </Typography>
-                {["What is Babysitters.com", "Sign up as Babysitter", "Sign up as Guardian", "Partners"].map(
+                {["What is Babysitters.com", "Sign up as Babysitter", "Sign up as Guardian", "Partners", "FAQs"].map(
                     (text, index) => (
                         <Typography
                             key={index}
@@ -93,10 +92,15 @@ const Footer = () => (
                                 "&:hover": {
                                     fontWeight: 'bold',
                                     color: '#004951',
+                                    textDecoration: 'underline',
                                 },
                             }}
                         >
-                            <Link href="#" underline="none" sx={{ color: 'inherit' }}>
+                            <Link
+                                href={text === "FAQs" ? "/faqs" : "#"} // Link only FAQs to the FAQ page
+                                underline="none"
+                                sx={{ color: 'inherit' }}
+                            >
                                 {text}
                             </Link>
                         </Typography>
@@ -130,14 +134,15 @@ const Footer = () => (
                             "&:hover": {
                                 fontWeight: 'bold',
                                 color: '#004951',
+                                textDecoration: 'underline',
                             },
                         }}
                     >
-                            <Link href="#" underline="none" sx={{ color: 'inherit' }}>
-                                {text}
-                            </Link>
-                        </Typography>
-                    ))}
+                        <Link href="#" underline="none" sx={{ color: 'inherit' }}>
+                            {text}
+                        </Link>
+                    </Typography>
+                ))}
             </Grid>
         </Grid>
     </Box>

@@ -7,6 +7,9 @@ import Profile from './component/Profile/Profile';
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
 import Homepage from './component/Homepage/Homepage';
+import FAQsPage1 from './component/FAQs/FAQsLandingPage';
+import FAQsPage2 from './component/FAQs/FAQsPage';
+
 
 //hey Giannh!!
 
@@ -22,7 +25,10 @@ function App() {
           <Route path="profile" element={<Profile/>} />
           <Route path="/login" element={<Login />} />
           <Route path="register" element={<Register/>} />
-          
+          <Route path="/faqs" element={<FAQsPage1 />} />
+          <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
+          <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
+ 
         </Routes>
         <Footer/>
       </BrowserRouter>
