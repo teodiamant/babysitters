@@ -92,7 +92,7 @@ const NavBar = () => {
                         </Button>
                         <Button
                             component={RouterLink}
-                            to="/register"
+                            to="/signup-landing"
                             variant="contained"
                             sx={{ color: 'white', bgcolor: '#795e53', '&:hover': { bgcolor: '#4c3b34' } }}
                         >
