@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Container, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
 
 function HomePage() {
     const [location, setLocation] = useState('');
     const [date, setDate] = useState('');  // Use a string in 'YYYY-MM-DD' format for date input
     const [duration, setDuration] = useState('');
+    const navigate = useNavigate();  // Initialize navigate function
 
     const handleSearch = () => {
         console.log('Searching for:', { location, date, duration });
-        // Implement search logic here
+        navigate('/search');  // Navigate to the Search page
     };
 
     return (
