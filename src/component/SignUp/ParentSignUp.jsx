@@ -3,6 +3,7 @@ import { Container, Box, TextField, Button, Typography, CircularProgress, Link }
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { FIREBASE_AUTH } from '../../config/firebase';
+
 export default function ParentSignUp() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -101,7 +102,7 @@ export default function ParentSignUp() {
                         }}
                         disabled={loading}
                     >
-                        {loading ? <CircularProgress size={24} /> : 'ParentSignUp'}
+                        {loading ? <CircularProgress size={24} /> : 'Parent Sign Up'}
                     </Button>
                     <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
                         Already have an account?{' '}
