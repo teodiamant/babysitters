@@ -13,11 +13,10 @@ import FAQsPage2 from './component/FAQs/FAQsPage';
 import SpecificationsPage from './component/Footer/SpecificationsPage';
 import TermsPage from './component/Footer/TermsPage';
 import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
-import Search from './component/Search/Search';
+
 //hey Giannh!!
 
 function App() {
-  
   return (
     <div className="App">
       <BrowserRouter>
@@ -27,7 +26,6 @@ function App() {
         <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
           <Route path="profile" element={<Profile/>} />
           <Route path="/login" element={<Login />} />
-          <Route path="/search" element={<Search />} />
           <Route path="/signup-landing" element={<SignUpLandingPage />} />
           <Route path="/signup-parent" element={<ParentSignUp />} />
           <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
@@ -40,9 +38,9 @@ function App() {
           <Route path="/terms" element={<TermsPage />} />
         </Routes>
         </div>
-        <Footer/>
       </BrowserRouter>
     </div>
   );
 }
+
 export default App;
