@@ -3,6 +3,8 @@ import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore'; // Import doc and getDoc
+import { FIREBASE_DB } from '../../config/firebase'; // Ensure this path is correct
 import logo from '../../images/teo_logo.jpg';
 
 const NavBar = () => {
@@ -12,26 +14,28 @@ const NavBar = () => {
     const auth = getAuth();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                // Retrieve user claims and set user state
-                firebaseUser.getIdTokenResult().then(idTokenResult => {
-                    const userRole = idTokenResult.claims.role; // Assuming there's a 'role' claim
+                const userRef = doc(FIREBASE_DB, 'babysitters', firebaseUser.uid); // Make sure this points to the right collection
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
                     setUser({
                         name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
                         photoURL: firebaseUser.photoURL || "path/to/default/photo.jpg",
-                        role: userRole // Save the user role from claims
+                        role: docSnap.data().role,  // Assuming role is stored directly in the Firestore document
                     });
-                });
+                } else {
+                    console.log("No user document found!");
+                    setUser(null);
+                }
             } else {
                 setUser(null);
             }
         });
         return () => unsubscribe();
     }, [auth]);
+    
 
-    // Conditional navigation based on user role
-    console.log("User data:", user);
     const handleProfileClick = () => {
         if (user && user.role === 'babysitter') {
             navigate('/babysitter-profile');

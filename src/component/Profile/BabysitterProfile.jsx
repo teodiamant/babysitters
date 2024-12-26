@@ -6,37 +6,48 @@ import { Container, Card, CardMedia, CardContent, Typography, Button, Box } from
 
 const BabysitterProfile = () => {
     const [babysitter, setBabysitter] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const { id } = useParams();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchBabysitter = async () => {
             const docRef = doc(FIREBASE_DB, "babysitters", id);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                setBabysitter({ id: docSnap.id, ...docSnap.data() });
-            } else {
-                console.log("No such document!");
-                navigate('/search'); // Redirect if no babysitter is found
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setBabysitter({ id: docSnap.id, ...docSnap.data() });
+                } else {
+                    setError("No such document!");
+                    navigate('/search'); // Redirect if no babysitter is found
+                }
+            } catch (err) {
+                setError("Failed to fetch data");
+                console.error(err);
             }
+            setLoading(false);
         };
 
         fetchBabysitter();
     }, [id, navigate]);
 
     const handleSendMessage = () => {
-        console.log("Message sent to:", babysitter.firstName);
+        console.log("Message sent to:", babysitter?.firstName);
         // Implement messaging functionality
     };
 
     const handleMakeContract = () => {
-        console.log("Contract made with:", babysitter.firstName);
+        console.log("Contract made with:", babysitter?.firstName);
         // Implement contract creation functionality
     };
 
-    if (!babysitter) {
+    if (loading) {
         return <Typography>Loading...</Typography>;
+    }
+
+    if (error) {
+        return <Typography color="error">{error}</Typography>;
     }
 
     return (
@@ -45,27 +56,27 @@ const BabysitterProfile = () => {
                 <CardMedia
                     component="img"
                     height="340"
-                    image={babysitter.profilePicture || 'default_image.jpg'}
-                    alt={babysitter.firstName}
+                    image={babysitter?.profilePicture || 'default_image.jpg'}
+                    alt={babysitter?.firstName}
                 />
                 <CardContent>
                     <Typography gutterBottom variant="h4" component="div">
-                        {babysitter.firstName} {babysitter.lastName}
+                        {babysitter?.firstName} {babysitter?.lastName}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Email: {babysitter.email}
+                        Email: {babysitter?.email}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Phone: {babysitter.phoneNumber}
+                        Phone: {babysitter?.phoneNumber}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Location: {babysitter.area}
+                        Location: {babysitter?.area}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Experience: {babysitter.experience} years
+                        Experience: {babysitter?.experience} years
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Date of Birth: {new Date(babysitter.birthDate).toLocaleDateString()}
+                        Date of Birth: {new Date(babysitter?.birthDate).toLocaleDateString()}
                     </Typography>
                 </CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-around', p: 2 }}>
