@@ -41,6 +41,7 @@ const BabysitterSignUp = () => {
             days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             preferredHours: { start: '', end: '' },
         },
+        role: 'babysitter'
     });
 
     const handleInputChange = (e) => {

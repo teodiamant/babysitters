@@ -1,117 +1,318 @@
 import React, { useState } from 'react';
-import { Container, Box, TextField, Button, Typography, CircularProgress, Link } from '@mui/material';
+import {
+    Container,
+    TextField,
+    Button,
+    Typography,
+    Box,
+    Stepper,
+    Step,
+    StepLabel,
+    MenuItem,
+    CircularProgress,
+    Alert,
+} from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { FIREBASE_AUTH } from '../../config/firebase';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-export default function ParentSignUp() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const steps = ['Personal Details', 'Additional Information', 'Setup Profile'];
+
+const ParentSignUp = () => {
+    const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
-    async function SignUp(event) {
-        event.preventDefault();
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        gender: '',
+        birthDate: '',
+        email: '',
+        password: '',
+        phoneNumber: '',
+        numberOfChildren: '',
+        childrenAges: '',
+        profilePicture: '',
+        area: '',
+        street: '',
+        postalCode: '',
+        role: 'parent'
+    });
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData({ ...formData, profilePicture: reader.result });
+        };
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleNext = async () => {
+        if (activeStep < steps.length - 1) {
+            setActiveStep(activeStep + 1);
+        } else {
+            await handleSubmit();
+        }
+    };
+
+    const handleBack = () => {
+        if (activeStep > 0) {
+            setActiveStep(activeStep - 1);
+        }
+    };
+
+    const handleSubmit = async () => {
         setLoading(true);
-        if (!email || !password) {
-            alert('Please fill in all fields.');
-            setLoading(false);
-            return;
-        }
-        if (password.length < 6) {
-            alert('Password should be at least 6 characters long.');
-            setLoading(false);
-            return;
-        }
+        setSuccessMessage('');
+        setErrorMessage('');
         try {
-            const res = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
-            console.log('User Signed Up:', res.user);
-            alert('Sign Up successful! Redirecting...');
-            navigate('/signup-landing'); // Redirect to the landing page
+            const userCredential = await createUserWithEmailAndPassword(
+                FIREBASE_AUTH,
+                formData.email,
+                formData.password
+            );
+
+            const userId = userCredential.user.uid;
+
+            const userRef = doc(FIREBASE_DB, 'parents', userId);
+            await setDoc(userRef, {
+                ...formData,
+                createdAt: new Date(),
+            });
+
+            setSuccessMessage('Registration successful!');
+            setTimeout(() => navigate('/'), 2000);
         } catch (error) {
-            switch (error.code) {
-                case 'auth/email-already-in-use':
-                    alert('This email is already registered.');
-                    break;
-                case 'auth/invalid-email':
-                    alert('Please enter a valid email address.');
-                    break;
-                case 'auth/weak-password':
-                    alert('Password should be at least 6 characters long.');
-                    break;
-                default:
-                    alert('Failed to Sign Up. Please try again later.');
-            }
+            console.error('Error saving user data:', error);
+            setErrorMessage('An error occurred during registration. Please try again.');
         } finally {
             setLoading(false);
         }
-    }
+    };
+
     return (
-        <Container component="main" maxWidth="xs">
-            <Box
-                sx={{
-                    marginTop: 8,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                }}
-            >
-                <Typography component="h1" variant="h5">
-                    ParentSignUp
-                </Typography>
-                <Box component="form" onSubmit={SignUp} noValidate sx={{ mt: 1 }}>
+        <Container
+            maxWidth="sm"
+            sx={{
+                mt: 5,
+                pb: 3,
+                pt: 2,
+                borderRadius: 2,
+                boxShadow: 2,
+                textAlign: 'center',
+                backgroundColor: '#fff',
+            }}
+        >
+            <Stepper activeStep={activeStep} alternativeLabel sx={{
+                mb: 3,
+                '& .MuiStepIcon-root': {
+                    color: '#795e53', // Default color for step icons
+                },
+                '& .MuiStepIcon-root.Mui-active': {
+                    color: '#004951', // Active step color
+                },
+                '& .MuiStepIcon-root.Mui-completed': {
+                    color: '#f3b2ac', // Completed step color
+                },
+            }}>
+                {steps.map((label) => (
+                    <Step key={label}>
+                        <StepLabel>{label}</StepLabel>
+                    </Step>
+                ))}
+            </Stepper>
+            <Typography variant="h5" sx={{ mb: 3 }}>
+                Parent Sign-Up
+            </Typography>
+            {successMessage && <Alert severity="success">{successMessage}</Alert>}
+            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+            {activeStep === 0 && (
+                <form>
+                    {/* Name and Gender Section */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            label="First Name *"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Last Name *"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            fullWidth
+                        />
+                    </Box>
+                    {/* Address Section */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            select
+                            label="Gender *"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            fullWidth
+                        >
+                            <MenuItem value="Male">Male</MenuItem>
+                            <MenuItem value="Female">Female</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                        </TextField>
+                        <TextField
+                            label="Birth Date *"
+                            name="birthDate"
+                            value={formData.birthDate}
+                            onChange={handleInputChange}
+                            type="date"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
                     <TextField
-                        margin="normal"
-                        required
+                        label="Area *"
+                        name="area"
+                        value={formData.area}
+                        onChange={handleInputChange}
                         fullWidth
-                        id="email"
-                        label="Email Address"
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Street Address *"
+                        name="street"
+                        value={formData.street}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Postal Code *"
+                        name="postalCode"
+                        value={formData.postalCode}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Email *"
                         name="email"
-                        autoComplete="email"
-                        autoFocus
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={loading}
-                        aria-label="Email Address"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
                     />
                     <TextField
-                        margin="normal"
-                        required
-                        fullWidth
+                        label="Password *"
                         name="password"
-                        label="Password"
                         type="password"
-                        id="password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                        aria-label="Password"
-                    />
-                    <Button
-                        type="submit"
+                        value={formData.password}
+                        onChange={handleInputChange}
                         fullWidth
-                        variant="contained"
-                        color="primary"
-                        sx={{
-                            mt: 3,
-                            mb: 2,
-                            bgcolor: '#004951',
-                            '&:hover': {
-                                bgcolor: '#003d43',
-                            },
-                        }}
-                        disabled={loading}
-                    >
-                        {loading ? <CircularProgress size={24} /> : 'Parent Sign Up'}
-                    </Button>
-                    <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
-                        Already have an account?{' '}
-                        <Link component={RouterLink} to="/login" sx={{ fontWeight: 'bold' }}>
-                            Sign in
-                        </Link>
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Phone Number *"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                </form>
+            )}
+            {activeStep === 1 && (
+                <form>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Additional Information
                     </Typography>
-                </Box>
+                    <TextField
+                        label="Number of Children *"
+                        name="numberOfChildren"
+                        type="number"
+                        value={formData.numberOfChildren}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Children Ages"
+                        name="childrenAges"
+                        value={formData.childrenAges}
+                        onChange={handleInputChange}
+                        fullWidth
+                        multiline
+                        rows={3}
+                        sx={{ mb: 2 }}
+                    />
+                </form>
+            )}
+            {activeStep === 2 && (
+                <form>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Setup Profile
+                    </Typography>
+                    <TextField
+                        label="Short Bio"
+                        name="bio"
+                        value={formData.bio}
+                        onChange={handleInputChange}
+                        fullWidth
+                        multiline
+                        rows={4}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        type="file"
+                        name="profilePicture"
+                        onChange={handleFileChange}
+                        inputProps={{ accept: 'image/*' }}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    {formData.profilePicture && (
+                        <Box
+                            component="img"
+                            src={formData.profilePicture}
+                            alt="Profile Preview"
+                            sx={{
+                                width: '100%',
+                                maxWidth: 200,
+                                borderRadius: '50%',
+                                mt: 2,
+                                border: '2px solid #004951',
+                            }}
+                        />
+                    )}
+                </form>
+            )}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                {activeStep > 0 && (
+                    <Button variant="outlined" onClick={handleBack}>
+                        Back
+                    </Button>
+                )}
+                <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    sx={{ bgcolor: '#795e53', '&:hover': { bgcolor: '#4c3b34' } }}
+                    disabled={loading}
+                >
+                    {loading ? <CircularProgress size={24} /> : activeStep === steps.length - 1 ? 'Submit' : 'Next'}
+                </Button>
             </Box>
         </Container>
     );
-}
+};
+
+export default ParentSignUp;

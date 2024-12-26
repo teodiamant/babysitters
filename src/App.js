@@ -4,7 +4,10 @@ import BabysitterSignUp from './component/SignUp/BabysitterSignUp';
 import ParentSignUp from './component/SignUp/ParentSignUp';
 import SignUpLandingPage from './component/SignUp/SignUpLandingPage';
 import Login from './component/Login/Login';
-import Profile from './component/Profile/Profile';
+import ParentProfile from './component/Profile/ParentProfile';  // Ensure you use this if you need a profile page for parents
+import BabysitterProfile from './component/Profile/BabysitterProfile';
+import BabysitterSettings from './component/UserSettings/BabysitterSettings';
+import ParentSettings from './component/UserSettings/ParentSettings';  // Corrected from ParentSettingsrSettings
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
 import Homepage from './component/Homepage/Homepage';
@@ -13,7 +16,9 @@ import FAQsPage2 from './component/FAQs/FAQsPage';
 import SpecificationsPage from './component/Footer/SpecificationsPage';
 import TermsPage from './component/Footer/TermsPage';
 import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
-// Hey Giannh!!
+import Search from './component/Search/Search';
+import BabysitterDetails from './component/BabysitterDetails/BabysitterDetails';
+
 function App() {
   return (
     <div className="App">
@@ -33,18 +38,24 @@ function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
-              <Route path="profile" element={<Profile />} />
+              <Route path="/" element={<Homepage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup-landing" element={<SignUpLandingPage />} />
               <Route path="/signup-parent" element={<ParentSignUp />} />
               <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/babysitters/:id" element={<BabysitterDetails />} />
+              <Route path="/babysitter-settings" element={<BabysitterSettings />} />
+              <Route path="/paernt-settings" element={<ParentSettings />} />
               <Route path="/faqs" element={<FAQsPage1 />} />
               <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
               <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
               <Route path="/about" element={<WhatIsBabysitters />} />
               <Route path="/specifications" element={<SpecificationsPage />} />
+              <Route path="/parent-profile" element={<ParentProfile/>} />
+              <Route path="/babysitter-profile" element={<BabysitterProfile />} />
               <Route path="/terms" element={<TermsPage />} />
+              {/* If you need profiles for babysitters or parents, add routes here */}
             </Routes>
           </main>
           <Footer />

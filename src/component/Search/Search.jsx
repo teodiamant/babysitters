@@ -8,7 +8,6 @@ const BabysitterProfile = ({ babysitter }) => {
     const navigate = useNavigate();
 
     const viewDetails = () => {
-        // Πλοηγήστε στη σελίδα λεπτομερειών με περαιτέρω πληροφορίες για τη νταντά
         navigate(`/babysitters/${babysitter.id}`);
     };
 
@@ -18,7 +17,7 @@ const BabysitterProfile = ({ babysitter }) => {
                 <CardMedia
                     component="img"
                     height="140"
-                    image={babysitter.photo || 'default_image.jpg'}
+                    image={babysitter.profilePicture || 'default_image.jpg'}
                     alt="Babysitter photo"
                 />
                 <CardContent>
@@ -53,7 +52,7 @@ export default function Search() {
     return (
         <Container sx={{ py: 8 }} maxWidth="md">
             <Grid container spacing={4}>
-                {babysitters.map((babysitter) => (
+                {babysitters.map(babysitter => (
                     <Grid item key={babysitter.id} xs={12} sm={6} md={4}>
                         <BabysitterProfile babysitter={babysitter} />
                     </Grid>

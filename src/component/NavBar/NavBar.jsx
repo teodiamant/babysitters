@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box, Avatar } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import logo from '../../images/teo_logo.jpg';
 
 const NavBar = () => {
@@ -12,26 +12,32 @@ const NavBar = () => {
     const auth = getAuth();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setUser({
-                    name: user.displayName || user.email.split('@')[0], // Default to part of the email if name is not available
-                    photoURL: user.photoURL || "path/to/default/photo.jpg"
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                // Retrieve user claims and set user state
+                firebaseUser.getIdTokenResult().then(idTokenResult => {
+                    const userRole = idTokenResult.claims.role; // Assuming there's a 'role' claim
+                    setUser({
+                        name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                        photoURL: firebaseUser.photoURL || "path/to/default/photo.jpg",
+                        role: userRole // Save the user role from claims
+                    });
                 });
             } else {
                 setUser(null);
             }
         });
-        return () => unsubscribe(); // Ensure we clean up the listener
+        return () => unsubscribe();
     }, [auth]);
 
-    const handleLogout = async () => {
-        await signOut(auth);
-        navigate('/'); // Redirect to home on logout
-    };
-
+    // Conditional navigation based on user role
+    console.log("User data:", user);
     const handleProfileClick = () => {
-        navigate('/profile'); // Adjust this path based on your routing setup
+        if (user && user.role === 'babysitter') {
+            navigate('/babysitter-profile');
+        } else {
+            navigate('/parent-profile');
+        }
     };
 
     const navLinks = ['Home', 'About', 'Services', 'Contact'];
@@ -50,7 +56,6 @@ const NavBar = () => {
                         style={{ height: '100%', width: '100%', borderRadius: '50%', objectFit: 'cover' }}
                     />
                 </IconButton>
-
                 <Typography
                     component={RouterLink}
                     to="/"
@@ -58,7 +63,6 @@ const NavBar = () => {
                 >
                     Babysitters
                 </Typography>
-
                 <Box sx={{ display: 'flex', ml: 'auto', gap: 2 }}>
                     {navLinks.map((label) => (
                         <Button
@@ -71,14 +75,12 @@ const NavBar = () => {
                         </Button>
                     ))}
                 </Box>
-
                 {user ? (
                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar src={user.photoURL} sx={{ width: 30, height: 30 }} onClick={handleProfileClick} />
                         <Typography sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }} onClick={handleProfileClick}>
                             {user.name}
                         </Typography>
-                        <Button onClick={handleLogout} color="inherit">Logout</Button>
                     </Box>
                 ) : (
                     <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
@@ -100,7 +102,6 @@ const NavBar = () => {
                         </Button>
                     </Box>
                 )}
-
                 <IconButton
                     edge="end"
                     color="inherit"
@@ -111,7 +112,6 @@ const NavBar = () => {
                     <MenuIcon />
                 </IconButton>
             </Toolbar>
-
             <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
                 <List sx={{ width: 250 }}>
                     {[...navLinks, 'Sign In', 'Sign Up'].map((label) => (
