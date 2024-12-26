@@ -13,34 +13,44 @@ import FAQsPage2 from './component/FAQs/FAQsPage';
 import SpecificationsPage from './component/Footer/SpecificationsPage';
 import TermsPage from './component/Footer/TermsPage';
 import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
-
-//hey Giannh!!
-
+// Hey Giannh!!
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
-      <NavBar />
-      <div className="main">
-        <Routes>
-        <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
-          <Route path="profile" element={<Profile/>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup-landing" element={<SignUpLandingPage />} />
-          <Route path="/signup-parent" element={<ParentSignUp />} />
-          <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
-          <Route path="/faqs" element={<FAQsPage1 />} />
-          <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
-          <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
-          <Route path="/about" element={<WhatIsBabysitters />} />
-          <Route path="/faqs" element={<FAQsPage2 />} />
-          <Route path="/specifications" element={<SpecificationsPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-        </Routes>
+        <NavBar />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh", // Ensure full viewport height
+          }}
+        >
+          <main
+            style={{
+              flexGrow: 1, // Allow main content to grow and push footer to the bottom
+              padding: "20px", // Optional padding for content
+            }}
+          >
+            <Routes>
+              <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
+              <Route path="profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup-landing" element={<SignUpLandingPage />} />
+              <Route path="/signup-parent" element={<ParentSignUp />} />
+              <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
+              <Route path="/faqs" element={<FAQsPage1 />} />
+              <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
+              <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
+              <Route path="/about" element={<WhatIsBabysitters />} />
+              <Route path="/specifications" element={<SpecificationsPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+            </Routes>
+          </main>
+          <Footer />
         </div>
       </BrowserRouter>
     </div>
   );
 }
-
 export default App;

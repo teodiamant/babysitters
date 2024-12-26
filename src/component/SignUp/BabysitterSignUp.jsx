@@ -1,120 +1,342 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Container, TextField, Button, Typography, CircularProgress } from '@mui/material';
+import {
+    Container,
+    TextField,
+    Button,
+    Typography,
+    Box,
+    Stepper,
+    Step,
+    StepLabel,
+    MenuItem,
+    CircularProgress,
+    Alert,
+} from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-const ConfirmDetails = ({ userData }) => (
-    <div>
-        <Typography variant="h6">Confirm your details</Typography>
-        <Typography>{`Name: ${userData.firstName} ${userData.lastName}`}</Typography>
-        <Typography>{`Email: ${userData.email}`}</Typography>
-        <Typography>{`Address: ${userData.address}, ${userData.area}, ${userData.postalCode}`}</Typography>
-        <Typography>{`AMKA: ${userData.amka}`}</Typography>
-        <Typography>{`Extra Info: ${userData.extraInfo}`}</Typography>
-        <Typography>{`Document Uploaded: ${userData.document ? 'Yes' : 'No'}`}</Typography>
-        <Typography>{`Photo Uploaded: ${userData.photo ? 'Yes' : 'No'}`}</Typography>
-    </div>
-);
+const steps = ['Personal Details', 'Experience & Availability', 'Setup Profile'];
 
-export default function Register() {
-    const [userData, setUserData] = useState({
+const BabysitterSignUp = () => {
+    const [activeStep, setActiveStep] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         gender: '',
         birthDate: '',
         email: '',
         password: '',
-        address: '',
-        area: '',
-        postalCode: '',
-        amka: '',
-        extraInfo: '',
-        photo: null,
-        document: null
+        phoneNumber: '',
+        experience: '',
+        certifications: '',
+        bio: '',
+        profilePicture: '',
+        availability: {
+            days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            preferredHours: { start: '', end: '' },
+        },
     });
-    const [step, setStep] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
-    const handleNext = () => {
-        if (step === 2) {
-            if (validateFormData()) {
-                handleConfirmRegistration();
-            } else {
-                alert('Please fill all the required fields.');
-            }
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleDaySelection = (day) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            availability: {
+                ...prevData.availability,
+                days: prevData.availability.days.includes(day)
+                    ? prevData.availability.days.filter((d) => d !== day)
+                    : [...prevData.availability.days, day],
+            },
+        }));
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData({ ...formData, profilePicture: reader.result });
+        };
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleNext = async () => {
+        if (activeStep < steps.length - 1) {
+            setActiveStep(activeStep + 1);
         } else {
-            setStep(step + 1);
+            await handleSubmit();
         }
     };
 
     const handleBack = () => {
-        if (step > 0) {
-            setStep(step - 1);
+        if (activeStep > 0) {
+            setActiveStep(activeStep - 1);
         }
     };
 
-    const handleChange = (event) => {
-        const { name, value, files } = event.target;
-        setUserData({ ...userData, [name]: files ? files[0] : value });
-    };
-
-    const handleConfirmRegistration = async () => {
+    const handleSubmit = async () => {
         setLoading(true);
+        setSuccessMessage('');
+        setErrorMessage('');
         try {
-            const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, userData.email, userData.password);
-            console.log("Firebase Auth User created:", userCredential.user.uid);
+            const userCredential = await createUserWithEmailAndPassword(
+                FIREBASE_AUTH,
+                formData.email,
+                formData.password
+            );
 
-            const userRef = doc(FIREBASE_DB, "users", userCredential.user.uid);
-            const userInfo = {
-                ...userData,
-                documentUploaded: !!userData.document,
-                photo: userData.photo ? `photos/${userData.photo.name}` : null
-            };
+            const userId = userCredential.user.uid;
 
-            await setDoc(userRef, userInfo);
-            console.log("User data saved to Firestore successfully!");
-            navigate('/profile');
+            const userRef = doc(FIREBASE_DB, 'babysitters', userId);
+            await setDoc(userRef, {
+                ...formData,
+                createdAt: new Date(),
+            });
+
+            setSuccessMessage('Registration successful!');
+            setTimeout(() => navigate('/'), 2000);
         } catch (error) {
-            console.error("Error in user registration or data saving:", error);
+            console.error('Error saving user data:', error);
+            if (error.code === 'auth/email-already-in-use') {
+                setErrorMessage('This email is already registered.');
+            } else {
+                setErrorMessage('An error occurred during registration. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Container component="main">
-            <Typography component="h1" variant="h5">Register</Typography>
-            <form onSubmit={(e) => e.preventDefault()}>
-                {step === 0 && (
-                    <>
-                        <TextField label="First Name" name="firstName" value={userData.firstName} onChange={handleChange} required />
-                        <TextField label="Last Name" name="lastName" value={userData.lastName} onChange={handleChange} required />
-                        <TextField label="Email" type="email" name="email" value={userData.email} onChange={handleChange} required />
-                        <TextField label="Password" type="password" name="password" value={userData.password} onChange={handleChange} required />
-                        <TextField label="Address" name="address" value={userData.address} onChange={handleChange} required />
-                        <TextField label="Area" name="area" value={userData.area} onChange={handleChange} required />
-                        <TextField label="Postal Code" name="postalCode" value={userData.postalCode} onChange={handleChange} required />
-                        <TextField label="AMKA" name="amka" value={userData.amka} onChange={handleChange} required />
-                    </>
+        <Container
+            maxWidth="sm"
+            sx={{
+                mt: 5,
+                pb: 3,
+                pt: 2,
+                borderRadius: 2,
+                boxShadow: 2,
+                textAlign: 'center',
+                backgroundColor: '#fff',
+            }}
+        >
+            <Stepper activeStep={activeStep} alternativeLabel 
+            sx={{
+                mb: 3,
+                '& .MuiStepIcon-root': {
+                    color: '#795e53', // Default color for step icons
+                },
+                '& .MuiStepIcon-root.Mui-active': {
+                    color: '#004951', // Active step color
+                },
+                '& .MuiStepIcon-root.Mui-completed': {
+                    color: '#f3b2ac', // Completed step color
+                },
+            }}>
+                {steps.map((label) => (
+                    <Step key={label}>
+                        <StepLabel>{label}</StepLabel>
+                    </Step>
+                ))}
+            </Stepper>
+            <Typography variant="h5" sx={{ mb: 3 }}>
+                Babysitter Sign-Up
+            </Typography>
+            {successMessage && <Alert severity="success">{successMessage}</Alert>}
+            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+            {activeStep === 0 && (
+                <form>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            label="First Name *"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Last Name *"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            fullWidth
+                        />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            select
+                            label="Gender *"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            fullWidth
+                        >
+                            <MenuItem value="Male">Male</MenuItem>
+                            <MenuItem value="Female">Female</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                        </TextField>
+                        <TextField
+                            label="Birth Date *"
+                            name="birthDate"
+                            value={formData.birthDate}
+                            onChange={handleInputChange}
+                            type="date"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
+                    <TextField
+                        label="Email *"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Password *"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Phone Number *"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                </form>
+            )}
+            {activeStep === 1 && (
+                <form>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Experience
+                    </Typography>
+                    <TextField
+                        label="Years of Experience *"
+                        name="experience"
+                        type="number"
+                        value={formData.experience}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Certifications/Skills"
+                        name="certifications"
+                        value={formData.certifications}
+                        onChange={handleInputChange}
+                        fullWidth
+                        multiline
+                        rows={3}
+                        sx={{ mb: 2 }}
+                    />
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Availability
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
+                        {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, index) => (
+                            <Box
+                                key={index}
+                                onClick={() => handleDaySelection(day)}
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    border: '2px solid #f3b2ac',
+                                    backgroundColor: formData.availability.days.includes(day)
+                                        ? '#f3b2ac'
+                                        : 'transparent',
+                                    color: formData.availability.days.includes(day) ? '#fff' : '#4c3b34',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    userSelect: 'none',
+                                }}
+                            >
+                                {day}
+                            </Box>
+                        ))}
+                    </Box>
+                </form>
+            )}
+            {activeStep === 2 && (
+                <form>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Setup Profile
+                    </Typography>
+                    <TextField
+                        label="Short Bio"
+                        name="bio"
+                        value={formData.bio}
+                        onChange={handleInputChange}
+                        fullWidth
+                        multiline
+                        rows={4}
+                        sx={{ mb: 2 }}
+                    />
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        Upload Profile Picture (Base64):
+                    </Typography>
+                    <TextField
+                        type="file"
+                        name="profilePicture"
+                        onChange={handleFileChange}
+                        inputProps={{ accept: 'image/*' }}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    {formData.profilePicture && (
+                        <Box
+                            component="img"
+                            src={formData.profilePicture}
+                            alt="Profile Preview"
+                            sx={{
+                                width: '100%',
+                                maxWidth: 200,
+                                borderRadius: '50%',
+                                mt: 2,
+                                border: '2px solid #004951',
+                            }}
+                        />
+                    )}
+                </form>
+            )}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                {activeStep > 0 && (
+                    <Button variant="outlined" onClick={handleBack}>
+                        Back
+                    </Button>
                 )}
-                {step === 1 && (
-                    <>
-                        <TextField label="Extra Information" name="extraInfo" value={userData.extraInfo} onChange={handleChange} multiline rows={4} />
-                        <TextField type="file" name="document" onChange={handleChange} inputProps={{ accept: "application/pdf" }} />
-                        <TextField type="file" name="photo" onChange={handleChange} inputProps={{ accept: "image/*" }} />
-                    </>
-                )}
-                {step === 2 && <ConfirmDetails userData={userData} />}
-                <Button onClick={handleBack} disabled={step === 0}>Back</Button>
-                <Button onClick={handleNext}>
-                    {step === 2 ? 'Confirm & Register' : 'Next'}
+                <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    sx={{ bgcolor: '#795e53', '&:hover': { bgcolor: '#4c3b34' } }}
+                    disabled={loading}
+                >
+                    {loading ? <CircularProgress size={24} /> : activeStep === steps.length - 1 ? 'Submit' : 'Next'}
                 </Button>
-                {loading && <CircularProgress />}
-            </form>
+            </Box>
         </Container>
     );
-}
+};
 
+export default BabysitterSignUp;
