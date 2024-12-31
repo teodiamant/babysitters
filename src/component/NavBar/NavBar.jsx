@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box, Avatar } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // Import doc and getDoc
-import { FIREBASE_DB } from '../../config/firebase'; // Ensure this path is correct
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import logo from '../../images/teo_logo.jpg';
 
 const NavBar = () => {
@@ -14,27 +12,24 @@ const NavBar = () => {
     const auth = getAuth();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                const userRef = doc(FIREBASE_DB, 'babysitters', firebaseUser.uid); // Make sure this points to the right collection
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    setUser({
-                        name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-                        photoURL: firebaseUser.photoURL || "path/to/default/photo.jpg",
-                        role: docSnap.data().role,  // Assuming role is stored directly in the Firestore document
-                    });
-                } else {
-                    console.log("No user document found!");
-                    setUser(null);
-                }
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUser({
+                    name: user.displayName || user.email.split('@')[0], // Default to part of the email if name is not available
+                    photoURL: user.photoURL || "path/to/default/photo.jpg"
+                });
             } else {
+                // If no user is signed in, reset user state
                 setUser(null);
             }
         });
-        return () => unsubscribe();
+        return () => unsubscribe(); // Ensure we clean up the listener
     }, [auth]);
-    
+
+    const handleLogout = async () => {
+        await signOut(auth);
+        navigate('/'); // Redirect to home on logout
+    };
 
     const handleProfileClick = () => {
         if (user && user.role === 'babysitter') {
@@ -81,7 +76,7 @@ const NavBar = () => {
                 </Box>
                 {user ? (
                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={user.photoURL} sx={{ width: 30, height: 30 }} onClick={handleProfileClick} />
+                        <Avatar src={user.profilePicture} sx={{ width: 30, height: 30 }} onClick={handleProfileClick} />
                         <Typography sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }} onClick={handleProfileClick}>
                             {user.name}
                         </Typography>

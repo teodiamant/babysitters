@@ -11,10 +11,12 @@ import {
     MenuItem,
     CircularProgress,
     Alert,
+    FormControlLabel,
+    Checkbox,
 } from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
 const steps = ['Personal Details', 'Experience & Availability', 'Setup Profile'];
@@ -24,6 +26,7 @@ const BabysitterSignUp = () => {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isFlexible, setIsFlexible] = useState(false); // Track if babysitter is flexible
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         firstName: '',
@@ -38,7 +41,7 @@ const BabysitterSignUp = () => {
         bio: '',
         profilePicture: '',
         availability: {
-            days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            days: [],
             preferredHours: { start: '', end: '' },
         },
         role: 'babysitter'
@@ -63,14 +66,15 @@ const BabysitterSignUp = () => {
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setFormData({ ...formData, profilePicture: reader.result });
-        };
         if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({...formData, profilePicture: reader.result});
+            };
             reader.readAsDataURL(file);
         }
     };
+    
 
     const handleNext = async () => {
         if (activeStep < steps.length - 1) {
@@ -91,20 +95,42 @@ const BabysitterSignUp = () => {
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            const userCredential = await createUserWithEmailAndPassword(
+            // Create user in Firebase Authentication
+            const { user } = await createUserWithEmailAndPassword(
                 FIREBASE_AUTH,
                 formData.email,
                 formData.password
             );
-
-            const userId = userCredential.user.uid;
-
-            const userRef = doc(FIREBASE_DB, 'babysitters', userId);
-            await setDoc(userRef, {
-                ...formData,
+    
+            const userId = user.uid;
+    
+            // Add to 'users' collection in Firestore
+            await addDoc(collection(FIREBASE_DB, 'users'), {
+                userId: userId, // Link Firestore doc to the Authentication user ID
+                email: formData.email,
+                role: 'babysitter',
                 createdAt: new Date(),
             });
-
+    
+            // Add to 'babysitters' collection in Firestore
+            await addDoc(collection(FIREBASE_DB, 'babysitters'), {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                gender: formData.gender,
+                birthDate: formData.birthDate,
+                email: formData.email,
+                phoneNumber: formData.phoneNumber,
+                experience: formData.experience,
+                certifications: formData.certifications,
+                bio: formData.bio,
+                profilePicture: formData.profilePicture,
+                availability: {
+                    ...formData.availability,
+                    isFlexible, // Include flexibility information
+                },
+                createdAt: new Date(),
+            });
+    
             setSuccessMessage('Registration successful!');
             setTimeout(() => navigate('/'), 2000);
         } catch (error) {
@@ -118,6 +144,8 @@ const BabysitterSignUp = () => {
             setLoading(false);
         }
     };
+    
+
 
     return (
         <Container
@@ -132,19 +160,22 @@ const BabysitterSignUp = () => {
                 backgroundColor: '#fff',
             }}
         >
-            <Stepper activeStep={activeStep} alternativeLabel 
-            sx={{
-                mb: 3,
-                '& .MuiStepIcon-root': {
-                    color: '#795e53', // Default color for step icons
-                },
-                '& .MuiStepIcon-root.Mui-active': {
-                    color: '#004951', // Active step color
-                },
-                '& .MuiStepIcon-root.Mui-completed': {
-                    color: '#f3b2ac', // Completed step color
-                },
-            }}>
+            <Stepper
+                activeStep={activeStep}
+                alternativeLabel
+                sx={{
+                    mb: 3,
+                    '& .MuiStepIcon-root': {
+                        color: '#795e53', // Default color for step icons
+                    },
+                    '& .MuiStepIcon-root.Mui-active': {
+                        color: '#004951', // Active step color
+                    },
+                    '& .MuiStepIcon-root.Mui-completed': {
+                        color: '#f3b2ac', // Completed step color
+                    },
+                }}
+            >
                 {steps.map((label) => (
                     <Step key={label}>
                         <StepLabel>{label}</StepLabel>
@@ -185,7 +216,6 @@ const BabysitterSignUp = () => {
                         >
                             <MenuItem value="Male">Male</MenuItem>
                             <MenuItem value="Female">Female</MenuItem>
-                            <MenuItem value="Other">Other</MenuItem>
                         </TextField>
                         <TextField
                             label="Birth Date *"
@@ -252,9 +282,9 @@ const BabysitterSignUp = () => {
                         Availability
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
-                        {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, index) => (
+                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                             <Box
-                                key={index}
+                                key={day}
                                 onClick={() => handleDaySelection(day)}
                                 sx={{
                                     width: 40,
@@ -273,10 +303,20 @@ const BabysitterSignUp = () => {
                                     userSelect: 'none',
                                 }}
                             >
-                                {day}
+                                {day.substring(0, 3).toUpperCase()}
                             </Box>
                         ))}
                     </Box>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={isFlexible}
+                                onChange={(e) => setIsFlexible(e.target.checked)}
+                            />
+                        }
+                        label="Flexible Availability"
+                        sx={{ mb: 2 }}
+                    />
                 </form>
             )}
             {activeStep === 2 && (
