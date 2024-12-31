@@ -44,7 +44,6 @@ const BabysitterSignUp = () => {
             days: [],
             preferredHours: { start: '', end: '' },
         },
-        role: 'babysitter'
     });
 
     const handleInputChange = (e) => {

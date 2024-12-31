@@ -3,6 +3,8 @@ import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'; // Import doc and getDoc-babysitter
+import { FIREBASE_DB } from '../../config/firebase'; // Import your Firestore database instance-babysitter
 import logo from '../../images/teo_logo.jpg';
 
 const NavBar = () => {
@@ -12,18 +14,46 @@ const NavBar = () => {
     const auth = getAuth();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setUser({
-                    name: user.displayName || user.email.split('@')[0], // Default to part of the email if name is not available
-                    photoURL: user.photoURL || "path/to/default/photo.jpg"
-                });
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                const fetchUserData = async () => {
+                    try {
+                        // Default values from Firebase Authentication
+                        let userName = firebaseUser.displayName || firebaseUser.email.split('@')[0];
+                        let profilePicture = firebaseUser.photoURL || "path/to/default/photo.jpg";
+        
+                        // Fetch additional user data from Firestore using query (missing import earlier)
+                        const babysitterQuery = query(
+                            collection(FIREBASE_DB, 'babysitters'),
+                            where('email', '==', firebaseUser.email)
+                        );
+        
+                        const babysitterQuerySnapshot = await getDocs(babysitterQuery);
+        
+                        if (!babysitterQuerySnapshot.empty) {
+                            const babysitterData = babysitterQuerySnapshot.docs[0].data();
+                            profilePicture = babysitterData.profilePicture || profilePicture;
+                            userName = babysitterData.name || userName;
+                        }
+        
+                        // Set user state
+                        setUser({
+                            name: userName,
+                            photoURL: profilePicture,
+                        });
+                    } catch (error) {
+                        console.error("Error fetching user data:", error);
+                    }
+                };
+        
+                fetchUserData();
             } else {
                 // If no user is signed in, reset user state
                 setUser(null);
             }
         });
-        return () => unsubscribe(); // Ensure we clean up the listener
+
+        return () => unsubscribe(); // Clean up the listener
     }, [auth]);
 
     const handleLogout = async () => {
@@ -32,11 +62,7 @@ const NavBar = () => {
     };
 
     const handleProfileClick = () => {
-        if (user && user.role === 'babysitter') {
-            navigate('/babysitter-profile');
-        } else {
-            navigate('/parent-profile');
-        }
+        navigate('/profile'); // Adjust this path based on your routing setup
     };
 
     const navLinks = ['Home', 'About', 'Services', 'Contact'];
@@ -55,6 +81,7 @@ const NavBar = () => {
                         style={{ height: '100%', width: '100%', borderRadius: '50%', objectFit: 'cover' }}
                     />
                 </IconButton>
+
                 <Typography
                     component={RouterLink}
                     to="/"
@@ -62,6 +89,7 @@ const NavBar = () => {
                 >
                     Babysitters
                 </Typography>
+
                 <Box sx={{ display: 'flex', ml: 'auto', gap: 2 }}>
                     {navLinks.map((label) => (
                         <Button
@@ -74,12 +102,14 @@ const NavBar = () => {
                         </Button>
                     ))}
                 </Box>
+
                 {user ? (
                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={user.profilePicture} sx={{ width: 30, height: 30 }} onClick={handleProfileClick} />
+                        <Avatar src={user.photoURL} sx={{ width: 30, height: 30 }} onClick={handleProfileClick} />
                         <Typography sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }} onClick={handleProfileClick}>
                             {user.name}
                         </Typography>
+                        <Button onClick={handleLogout} color="inherit">Logout</Button>
                     </Box>
                 ) : (
                     <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
@@ -101,6 +131,7 @@ const NavBar = () => {
                         </Button>
                     </Box>
                 )}
+
                 <IconButton
                     edge="end"
                     color="inherit"
@@ -111,6 +142,7 @@ const NavBar = () => {
                     <MenuIcon />
                 </IconButton>
             </Toolbar>
+
             <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
                 <List sx={{ width: 250 }}>
                     {[...navLinks, 'Sign In', 'Sign Up'].map((label) => (

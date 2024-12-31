@@ -4,7 +4,12 @@ import BabysitterSignUp from './component/SignUp/BabysitterSignUp';
 import ParentSignUp from './component/SignUp/ParentSignUp';
 import SignUpLandingPage from './component/SignUp/SignUpLandingPage';
 import Login from './component/Login/Login';
+import ParentProfile from './component/Profile/ParentProfile';  // Ensure you use this if you need a profile page for parents
+import BabysitterProfile from './component/Profile/BabysitterProfile';
+import BabysitterSettings from './component/UserSettings/BabysitterSettings';
+import ParentSettings from './component/UserSettings/ParentSettings';  // Corrected from ParentSettingsrSettings
 import Profile from './component/Profile/Profile';
+import EditBabysitterProfile from './component/Profile/editBabysitterProfile';
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
 import Homepage from './component/Homepage/Homepage';
@@ -35,8 +40,10 @@ function App() {
             }}
           >
             <Routes>
+              <Route path="/" element={<Homepage />} />
               <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
               <Route path="profile" element={<Profile />} />
+              <Route path="/edit-babysitter-profile" element={<EditBabysitterProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup-landing" element={<SignUpLandingPage />} />
               <Route path="/signup-parent" element={<ParentSignUp />} />
