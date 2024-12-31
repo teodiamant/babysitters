@@ -13,6 +13,7 @@ import EditBabysitterProfile from './component/Profile/editBabysitterProfile';
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
 import Homepage from './component/Homepage/Homepage';
+import LandingPage from './component/Homepage/LandingPage';
 import FAQsPage1 from './component/FAQs/FAQsLandingPage';
 import FAQsPage2 from './component/FAQs/FAQsPage';
 import SpecificationsPage from './component/Footer/SpecificationsPage';
@@ -40,8 +41,8 @@ function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Homepage />} />
-              <Route path="/" element={<Homepage />} /> {/* Changed to Homepage */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/search" element={<Homepage />} />
               <Route path="profile" element={<Profile />} />
               <Route path="/edit-babysitter-profile" element={<EditBabysitterProfile />} />
               <Route path="/login" element={<Login />} />

@@ -3,7 +3,7 @@ import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'; // Import doc and getDoc-babysitter
+import { query, collection, where, getDocs } from 'firebase/firestore'; // Import doc and getDoc-babysitter
 import { FIREBASE_DB } from '../../config/firebase'; // Import your Firestore database instance-babysitter
 import logo from '../../images/teo_logo.jpg';
 
@@ -62,7 +62,7 @@ const NavBar = () => {
     };
 
     const handleProfileClick = () => {
-        navigate('/profile'); // Adjust this path based on your routing setup
+        navigate('/parent-profile'); // Adjust this path based on your routing setup
     };
 
     const navLinks = ['Home', 'About', 'Services', 'Contact'];
