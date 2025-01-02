@@ -12,6 +12,7 @@ const Footer = () => (
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
+            boxShadow: '0px -4px 10px rgba(0, 0, 0, 0.5)',
         }}
     >
         <Grid container spacing={4} alignItems="center">

@@ -27,13 +27,15 @@ const SignUpLandingPage = () => {
                 backgroundColor: '#f9f9f9',
                 minHeight: '100vh',
                 display: 'flex',
+                //margin: -2.5,
+                paddingTop: '50px',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
             }}
         >
             <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
-                Choose Your Role
+                How would you like to sign up?
             </Typography>
             <Grid
                 container
@@ -55,6 +57,7 @@ const SignUpLandingPage = () => {
                                     maxWidth: 400,
                                     backgroundColor: '#fff',
                                     borderRadius: 2,
+                                    border: '1px solid #795e53',
                                     display: 'flex',
                                     alignItems: 'flex-start',
                                     justifyContent: 'center',

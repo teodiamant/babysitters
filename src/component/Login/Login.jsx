@@ -88,7 +88,7 @@ export default function Login() {
                     {error && <Typography color="error">{error}</Typography>}
                     <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
                         If you are not signed up, {' '}
-                        <Link component={RouterLink} to="/register" sx={{ fontWeight: 'bold' }}>
+                        <Link component={RouterLink} to="/signup-landing" sx={{ fontWeight: 'bold' }}>
                             Sign up
                         </Link>
                     </Typography>

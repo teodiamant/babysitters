@@ -68,7 +68,7 @@ const NavBar = () => {
     const navLinks = ['Home', 'About', 'Services', 'Contact'];
 
     return (
-        <AppBar position="static" sx={{ bgcolor: '#d5caac' }}>
+        <AppBar position="static" sx={{ bgcolor: '#d5caac', }}>
             <Toolbar>
                 <IconButton
                     component={RouterLink}
