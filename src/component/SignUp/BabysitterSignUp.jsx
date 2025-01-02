@@ -1,19 +1,6 @@
 import React, { useState } from 'react';
-import {
-    Container,
-    TextField,
-    Button,
-    Typography,
-    Box,
-    Stepper,
-    Step,
-    StepLabel,
-    MenuItem,
-    CircularProgress,
-    Alert,
-    FormControlLabel,
-    Checkbox,
-} from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, MenuItem, CircularProgress,
+        Alert, FormControlLabel, Checkbox,} from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { collection, addDoc } from 'firebase/firestore';
@@ -28,22 +15,9 @@ const BabysitterSignUp = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [isFlexible, setIsFlexible] = useState(false); // Track if babysitter is flexible
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        gender: '',
-        birthDate: '',
-        email: '',
-        password: '',
-        phoneNumber: '',
-        experience: '',
-        certifications: '',
-        bio: '',
-        profilePicture: '',
-        availability: {
-            days: [],
-            preferredHours: { start: '', end: '' },
-        },
+    const [formData, setFormData] = useState({ firstName: '', lastName: '', gender: '', birthDate: '',
+            email: '', password: '', phoneNumber: '', experience: '', certifications: '', bio: '', 
+            profilePicture: '', availability: { days: [], preferredHours: { start: '', end: '' }, },
     });
 
     const handleInputChange = (e) => {
@@ -103,16 +77,15 @@ const BabysitterSignUp = () => {
     
             const userId = user.uid;
     
-            // Add to 'users' collection in Firestore
-            await addDoc(collection(FIREBASE_DB, 'users'), {
-                userId: userId, // Link Firestore doc to the Authentication user ID
+            // Prepare user data for Firestore
+            const userDocData = {
+                userId: userId,
                 email: formData.email,
                 role: 'babysitter',
                 createdAt: new Date(),
-            });
-    
-            // Add to 'babysitters' collection in Firestore
-            await addDoc(collection(FIREBASE_DB, 'babysitters'), {
+            };
+
+            const babysitterDocData = {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 gender: formData.gender,
@@ -128,8 +101,14 @@ const BabysitterSignUp = () => {
                     isFlexible, // Include flexibility information
                 },
                 createdAt: new Date(),
-            });
-    
+            };
+
+            // Add both documents in Firestore
+            await Promise.all([
+                addDoc(collection(FIREBASE_DB, 'users'), userDocData),
+                addDoc(collection(FIREBASE_DB, 'babysitters'), babysitterDocData),
+            ]);
+
             setSuccessMessage('Registration successful!');
             setTimeout(() => navigate('/'), 2000);
         } catch (error) {
@@ -340,7 +319,7 @@ const BabysitterSignUp = () => {
                         type="file"
                         name="profilePicture"
                         onChange={handleFileChange}
-                        inputProps={{ accept: 'image/*' }}
+                        slotProps   ={{ input: { accept: 'image/*' }, }}
                         fullWidth
                         sx={{ mb: 2 }}
                     />
