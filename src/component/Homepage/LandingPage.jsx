@@ -13,27 +13,27 @@ const LandingPage = () => {
     return (
         <Box
             sx={{
-                height: '90vh',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
                 justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh', // Full viewport height
+                margin: -2.5,
+                padding: 0,
+                boxSizing: 'border-box',
                 backgroundImage: `url(${backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                textAlign: 'center',
-                padding: '20px',
-                border: '5px solid #795e53', // Add border
-                borderRadius: '10px', // Rounded corners
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)', // Optional shadow
             }}
         >
             <Box
                 sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent background
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent overlay
                     padding: '20px',
-                    borderRadius: '10px', // Rounded corners
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)', // Shadow for depth
                 }}
             >
                 <Typography
