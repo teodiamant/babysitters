@@ -7,7 +7,7 @@ const LandingPage = () => {
     const navigate = useNavigate();
 
     const handleButtonClick = () => {
-        navigate('/search'); // Redirect to Homepage.jsx
+        navigate('/search'); // Redirect to search.jsx
     };
 
     return (

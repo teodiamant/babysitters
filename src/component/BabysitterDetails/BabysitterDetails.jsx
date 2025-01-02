@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
 import { Container, Typography, Button, Paper } from '@mui/material';
+import { getAuth } from 'firebase/auth';
 
 const BabysitterDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [babysitter, setBabysitter] = useState(null);
+    const auth = getAuth(); 
 
     useEffect(() => {
         const fetchBabysitter = async () => {
@@ -42,6 +45,16 @@ const BabysitterDetails = () => {
         return 'Not specified';
     };
 
+    const handleMakeContract = () => {
+        const user = auth.currentUser;
+        if (user) {
+            navigate('/make-contract', { state: { babysitterId: id } });
+        } else {
+            alert("Please sign in to make a contract.");
+            navigate('/login');
+        }
+    };
+
     if (!babysitter) {
         return <Typography>Loading...</Typography>;
     }
@@ -55,11 +68,12 @@ const BabysitterDetails = () => {
                 <Typography sx={{ mt: 2 }}>{babysitter.bio}</Typography>
                 <Typography sx={{ mt: 1 }}>Age: {calculateAge(babysitter.birthDate)}</Typography>
                 <Typography sx={{ mt: 1 }}>Experience: {babysitter.experience} years</Typography>
+                <Typography sx={{ mt: 1 }}>Certifications: {babysitter.certifications}</Typography>
                 <Typography sx={{ mt: 1 }}>Availability: {formatAvailability(babysitter.availability)}</Typography>
                 <Button variant="contained" color="primary" sx={{ mt: 2, mr: 1 }}>
                     Send Message
                 </Button>
-                <Button variant="contained" color="secondary" sx={{ mt: 2 }}>
+                <Button variant="contained" color="secondary" sx={{ mt: 2 }}  onClick={handleMakeContract}>
                     Make a Contract
                 </Button>
             </Paper>

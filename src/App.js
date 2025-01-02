@@ -12,7 +12,7 @@ import Profile from './component/Profile/Profile';
 import EditBabysitterProfile from './component/Profile/editBabysitterProfile';
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
-import Homepage from './component/Homepage/Homepage';
+import MakeContract from './component/MakeContract/MakeContract';
 import LandingPage from './component/Homepage/LandingPage';
 import FAQsPage1 from './component/FAQs/FAQsLandingPage';
 import FAQsPage2 from './component/FAQs/FAQsPage';
@@ -42,14 +42,14 @@ function App() {
           >
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/search" element={<Homepage />} />
+              <Route path="/search" element={<Search />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="/make-contract" element={<MakeContract />} />
               <Route path="/edit-babysitter-profile" element={<EditBabysitterProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup-landing" element={<SignUpLandingPage />} />
               <Route path="/signup-parent" element={<ParentSignUp />} />
               <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
-              <Route path="/search" element={<Search />} />
               <Route path="/babysitters/:id" element={<BabysitterDetails />} />
               <Route path="/babysitter-settings" element={<BabysitterSettings />} />
               <Route path="/paernt-settings" element={<ParentSettings />} />

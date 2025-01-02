@@ -81,6 +81,7 @@ const ParentSignUp = () => {
             // Add to users collection
             const userRef = doc(FIREBASE_DB, 'users', userId);
             await setDoc(userRef, {
+                userId: userId,
                 email: formData.email,
                 role: 'parent',
                 createdAt: new Date(),
