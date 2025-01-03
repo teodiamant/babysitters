@@ -58,8 +58,8 @@ function App() {
               <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
               <Route path="/about" element={<WhatIsBabysitters />} />
               <Route path="/specifications" element={<SpecificationsPage />} />
-              <Route path="/parent-profile" element={<ParentProfile/>} />
-              <Route path="/babysitter-profile" element={<BabysitterProfile />} />
+              <Route path="/parent-profile/:id" element={<ParentProfile/>} />
+              <Route path="/babysitter-profile/:id" element={<BabysitterProfile />} />
               <Route path="/terms" element={<TermsPage />} />
               {/* If you need profiles for babysitters or parents, add routes here */}
             </Routes>

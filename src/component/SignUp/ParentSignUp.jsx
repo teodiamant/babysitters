@@ -32,7 +32,7 @@ const ParentSignUp = () => {
         email: '',
         password: '',
         phoneNumber: '',
-        daysNeeded: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        profilePicture: '',
         isFlexible: false,
         additionalInfo: '',
     });
@@ -42,14 +42,6 @@ const ParentSignUp = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleDaySelection = (day) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            daysNeeded: prevData.daysNeeded.includes(day)
-                ? prevData.daysNeeded.filter((d) => d !== day)
-                : [...prevData.daysNeeded, day],
-        }));
-    };
 
     const handleNext = async () => {
         if (activeStep < steps.length - 1) {
@@ -62,6 +54,17 @@ const ParentSignUp = () => {
     const handleBack = () => {
         if (activeStep > 0) {
             setActiveStep(activeStep - 1);
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({...formData, profilePicture: reader.result});
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -94,7 +97,7 @@ const ParentSignUp = () => {
                 lastName: formData.lastName,
                 email: formData.email,
                 phoneNumber: formData.phoneNumber,
-                daysNeeded: formData.daysNeeded,
+                profilePicture: formData.profilePicture,
                 isFlexible: formData.isFlexible,
                 additionalInfo: formData.additionalInfo,
                 createdAt: new Date(),
@@ -201,37 +204,31 @@ const ParentSignUp = () => {
             )}
             {activeStep === 1 && (
                 <form>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                        Days Babysitter is Needed
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
-                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
-                            (day, index) => (
-                                <Box
-                                    key={index}
-                                    onClick={() => handleDaySelection(day)}
-                                    sx={{
-                                        width: 40,
-                                        height: 40,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        borderRadius: '50%',
-                                        border: '2px solid #f3b2ac',
-                                        backgroundColor: formData.daysNeeded.includes(day)
-                                            ? '#f3b2ac'
-                                            : 'transparent',
-                                        color: formData.daysNeeded.includes(day) ? '#fff' : '#4c3b34',
-                                        cursor: 'pointer',
-                                        fontWeight: 'bold',
-                                        userSelect: 'none',
-                                    }}
-                                >
-                                    {day.slice(0, 3).toUpperCase()}
-                                </Box>
-                            )
-                        )}
-                    </Box>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                                            Upload Profile Picture (Base64):
+                                        </Typography>
+                                        <TextField
+                                            type="file"
+                                            name="profilePicture"
+                                            onChange={handleFileChange}
+                                            slotProps   ={{ input: { accept: 'image/*' }, }}
+                                            fullWidth
+                                            sx={{ mb: 2 }}
+                                        />
+                                        {formData.profilePicture && (
+                                            <Box
+                                                component="img"
+                                                src={formData.profilePicture}
+                                                alt="Profile Preview"
+                                                sx={{
+                                                    width: '100%',
+                                                    maxWidth: 200,
+                                                    borderRadius: '50%',
+                                                    mt: 2,
+                                                    border: '2px solid #004951',
+                                                }}
+                                            />
+                                        )}
                     <FormControlLabel
                         control={
                             <Checkbox

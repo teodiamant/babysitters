@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { query, collection, where, getDocs } from 'firebase/firestore';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { FIREBASE_AUTH } from '../../config/firebase';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { Button, TextField, CircularProgress, Box, Typography, Container, Link } from '@mui/material';
 
 export default function Login() {
@@ -19,9 +20,32 @@ export default function Login() {
 
         try {
             const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
-            console.log("User logged in:", userCredential.user);
-            navigate('/profile');
+            const user = userCredential.user;
+
+            console.log("User logged in:", user);
+
+            // Fetch user role from Firestore
+            const userQuery = query(
+                collection(FIREBASE_DB, 'users'),
+                where('email', '==', user.email)
+            );
+            const userSnapshot = await getDocs(userQuery);
+
+            if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data();
+
+                if (userData.role === 'babysitter') {
+                    navigate('/babysitter-profile');
+                } else if (userData.role === 'parent') {
+                    navigate('/parent-profile');
+                } else {
+                    console.error("Unknown user role:", userData.role);
+                }
+            } else {
+                console.error("No user data found in Firestore for this email.");
+            }
         } catch (error) {
+            console.error("Login error:", error);
             setError(error.message);
         } finally {
             setLoading(false);
@@ -29,11 +53,31 @@ export default function Login() {
     }
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (currentUser) => {
             if (currentUser) {
-                navigate('/profile');
+                try {
+                    // Fetch user role from Firestore
+                    const userQuery = query(
+                        collection(FIREBASE_DB, 'users'),
+                        where('email', '==', currentUser.email)
+                    );
+                    const userSnapshot = await getDocs(userQuery);
+
+                    if (!userSnapshot.empty) {
+                        const userData = userSnapshot.docs[0].data();
+
+                        if (userData.role === 'babysitter') {
+                            navigate('/babysitter-profile');
+                        } else if (userData.role === 'parent') {
+                            navigate('/parent-profile');
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking user role:", error);
+                }
             }
         });
+
         return () => unsubscribe();
     }, [navigate]);
 

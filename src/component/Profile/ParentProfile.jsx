@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
-import { Container, Card, CardMedia, CardContent, Typography, Button, Box } from '@mui/material';
+import { Container, Card, CardMedia, CardContent, Typography, Button, Box,CircularProgress } from '@mui/material';
 
 const ParentProfile = () => {
     const [parent, setParent] = useState(null);
@@ -11,23 +11,35 @@ const ParentProfile = () => {
 
     useEffect(() => {
         const fetchParent = async () => {
-            const docRef = doc(FIREBASE_DB, "parents", id);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                setParent({ id: docSnap.id, ...docSnap.data() });
-            } else {
-                console.log("No such document!");
-                navigate('/search'); // Redirect if no parent is found
+            try {
+                const docRef = doc(FIREBASE_DB, "parents", id);
+                const docSnap = await getDoc(docRef);
+    
+                if (docSnap.exists()) {
+                    setParent({ id: docSnap.id, ...docSnap.data() });
+                } else {
+                    console.log("No such document!");
+                    navigate('/search'); // Redirect if no parent is found
+                }
+            } catch (error) {
+                console.error("Error fetching parent data:", error);
+                navigate('/search');
             }
         };
-
+    
         fetchParent();
     }, [id, navigate]);
+    
 
     if (!parent) {
-        return <Typography>Loading...</Typography>;
+        return (
+            <Container maxWidth="sm" sx={{ textAlign: 'center', mt: 5 }}>
+                <CircularProgress />
+                <Typography>Loading...</Typography>
+            </Container>
+        );
     }
+    
 
     return (
         <Container maxWidth="md">
@@ -52,7 +64,7 @@ const ParentProfile = () => {
                         Location: {parent.area}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Date of Birth: {new Date(parent.birthDate).toLocaleDateString()}
+                        Date of Birth: {parent.birthDate ? new Date(parent.birthDate).toLocaleDateString() : 'N/A'}
                     </Typography>
                     <Typography variant="h6" color="primary" sx={{ mt: 2 }}>
                         You are viewing a Parent Profile
