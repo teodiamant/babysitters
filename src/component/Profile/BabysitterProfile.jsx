@@ -13,8 +13,9 @@ const BabysitterProfile = () => {
 
     useEffect(() => {
         const fetchBabysitter = async () => {
-            const docRef = doc(FIREBASE_DB, "babysitters", id);
+            
             try {
+                const docRef = doc(FIREBASE_DB, "babysitters", id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setBabysitter({ id: docSnap.id, ...docSnap.data() });

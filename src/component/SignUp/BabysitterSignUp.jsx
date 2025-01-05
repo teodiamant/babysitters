@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import { doc, setDoc } from 'firebase/firestore';
 
 const steps = ['Personal Details', 'Experience & Availability', 'Setup Profile'];
 
@@ -68,22 +69,22 @@ const BabysitterSignUp = () => {
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            // Create user in Firebase Authentication
-            const { user } = await createUserWithEmailAndPassword(
+            const userCredential = await createUserWithEmailAndPassword(
                 FIREBASE_AUTH,
                 formData.email,
                 formData.password
             );
-    
-            const userId = user.uid;
-    
-            // Prepare user data for Firestore
-            const userDocData = {
+
+            const userId = userCredential.user.uid;
+
+            // Add to users collection
+            const userRef = doc(FIREBASE_DB, 'users', userId);
+            await setDoc(userRef, {
                 userId: userId,
                 email: formData.email,
                 role: 'babysitter',
                 createdAt: new Date(),
-            };
+            });
 
             const babysitterDocData = {
                 firstName: formData.firstName,
@@ -105,9 +106,17 @@ const BabysitterSignUp = () => {
 
             // Add both documents in Firestore
             await Promise.all([
-                addDoc(collection(FIREBASE_DB, 'users'), userDocData),
+                // Προσθήκη του χρήστη στη συλλογή "users"
+                setDoc(doc(FIREBASE_DB, 'users', userId), {
+                    userId: userId,
+                    email: formData.email,
+                    role: 'babysitter',
+                    createdAt: new Date(),
+                }),
+                // Προσθήκη του babysitter στη συλλογή "babysitters"
                 addDoc(collection(FIREBASE_DB, 'babysitters'), babysitterDocData),
             ]);
+            
 
             setSuccessMessage('Registration successful!');
             setTimeout(() => navigate('/'), 2000);

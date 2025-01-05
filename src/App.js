@@ -4,10 +4,10 @@ import BabysitterSignUp from './component/SignUp/BabysitterSignUp';
 import ParentSignUp from './component/SignUp/ParentSignUp';
 import SignUpLandingPage from './component/SignUp/SignUpLandingPage';
 import Login from './component/Login/Login';
-import ParentProfile from './component/Profile/ParentProfile';  // Ensure you use this if you need a profile page for parents
+import ParentProfile from './component/Profile/ParentProfile'; 
 import BabysitterProfile from './component/Profile/BabysitterProfile';
 import BabysitterSettings from './component/UserSettings/BabysitterSettings';
-import ParentSettings from './component/UserSettings/ParentSettings';  // Corrected from ParentSettingsrSettings
+import ParentSettings from './component/UserSettings/ParentSettings'; 
 import Profile from './component/Profile/Profile';
 import EditBabysitterProfile from './component/Profile/editBabysitterProfile';
 import Footer from './component/Footer/Footer';

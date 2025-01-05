@@ -35,9 +35,9 @@ export default function Login() {
                 const userData = userSnapshot.docs[0].data();
 
                 if (userData.role === 'babysitter') {
-                    navigate('/babysitter-profile');
+                    navigate(`/babysitter-profile/${user.uid}`);
                 } else if (userData.role === 'parent') {
-                    navigate('/parent-profile');
+                    navigate(`/parent-profile/${user.uid}`);
                 } else {
                     console.error("Unknown user role:", userData.role);
                 }
@@ -67,9 +67,9 @@ export default function Login() {
                         const userData = userSnapshot.docs[0].data();
 
                         if (userData.role === 'babysitter') {
-                            navigate('/babysitter-profile');
+                            navigate(`/babysitter-profile/${currentUser.uid}`);
                         } else if (userData.role === 'parent') {
-                            navigate('/parent-profile');
+                            navigate(`/parent-profile/${currentUser.uid}`);
                         }
                     }
                 } catch (error) {
