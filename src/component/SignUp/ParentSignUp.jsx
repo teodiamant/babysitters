@@ -1,40 +1,23 @@
 import React, { useState } from 'react';
-import {
-    Container,
-    TextField,
-    Button,
-    Typography,
-    Box,
-    Stepper,
-    Step,
-    StepLabel,
-    CircularProgress,
-    Alert,
-    Checkbox,
-    FormControlLabel,
-} from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, MenuItem, CircularProgress,
+        Alert, FormControlLabel, Checkbox, } from '@mui/material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 
-const steps = ['Personal Details', 'Days Babysitter is Needed', 'Additional Information'];
+const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile'];
 
 const ParentSignUp = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isFlexible, setIsFlexible] = useState(false);
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        phoneNumber: '',
-        profilePicture: '',
-        isFlexible: false,
-        additionalInfo: '',
+    const [formData, setFormData] = useState({ firstName: '', lastName: '', gender: '', birthDate: '',
+            email: '', password: '', phoneNumber: '', numberOfChildren: '', childrenAges: '', specializations: '',
+            bio: '', profilePicture: '', availability: { days: [], preferredHours: { start: '', end: '' }, isFlexibleWithHours: false, },
     });
 
     const handleInputChange = (e) => {
@@ -42,6 +25,29 @@ const ParentSignUp = () => {
         setFormData({ ...formData, [name]: value });
     };
 
+    const handleDaySelection = (day) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            availability: {
+                ...prevData.availability,
+                days: prevData.availability.days.includes(day)
+                    ? prevData.availability.days.filter((d) => d !== day)
+                    : [...prevData.availability.days, day],
+            },
+        }));
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({...formData, profilePicture: reader.result});
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
 
     const handleNext = async () => {
         if (activeStep < steps.length - 1) {
@@ -57,56 +63,70 @@ const ParentSignUp = () => {
         }
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData({...formData, profilePicture: reader.result});
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
     const handleSubmit = async () => {
         setLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
+    
+        let userCredential = null;
+    
         try {
-            const userCredential = await createUserWithEmailAndPassword(
+            // Step 1: Create user in Firebase Authentication
+            userCredential = await createUserWithEmailAndPassword(
                 FIREBASE_AUTH,
                 formData.email,
                 formData.password
             );
-
             const userId = userCredential.user.uid;
-
-            // Add to users collection
-            const userRef = doc(FIREBASE_DB, 'users', userId);
-            await setDoc(userRef, {
-                userId: userId,
-                email: formData.email,
-                role: 'parent',
-                createdAt: new Date(),
-            });
-
-            // Add profile data to parents collection
-            const parentRef = doc(FIREBASE_DB, 'parents', userId);
-            await setDoc(parentRef, {
+    
+            // Step 2: Prepare parent data
+            const parentDocData = {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
+                gender: formData.gender,
+                birthDate: formData.birthDate,
                 email: formData.email,
                 phoneNumber: formData.phoneNumber,
+                numberOfChildren: formData.numberOfChildren,
+                childrenAges: formData.childrenAges,
+                specializations: formData.specializations,
+                availability: {
+                    days: formData.availability.days,
+                    preferredHours: formData.availability.preferredHours,
+                    isFlexibleWithHours: formData.availability.isFlexibleWithHours,
+                    isFlexible: isFlexible,
+                },
+                bio: formData.bio,
                 profilePicture: formData.profilePicture,
-                isFlexible: formData.isFlexible,
-                additionalInfo: formData.additionalInfo,
                 createdAt: new Date(),
-            });
-
+            };
+    
+            // Step 3: Add data to Firestore collections
+            await Promise.all([
+                setDoc(doc(FIREBASE_DB, 'users', userId), {
+                    userId: userId,
+                    email: formData.email,
+                    role: 'parent',
+                    createdAt: new Date(),
+                }),
+                setDoc(doc(FIREBASE_DB, 'parents', userId), parentDocData),
+            ]);
+    
             setSuccessMessage('Registration successful!');
-            setTimeout(() => navigate('/'), 2000);
+            setTimeout(() => navigate('/'), 1000);
         } catch (error) {
             console.error('Error saving user data:', error);
+    
+            // Rollback: Delete user from Firebase Authentication if registration fails
+            if (userCredential && userCredential.user) {
+                try {
+                    await userCredential.user.delete();
+                    console.log('User deleted from Firebase Authentication due to failure.');
+                } catch (authError) {
+                    console.error('Error deleting user from Firebase Authentication:', authError);
+                }
+            }
+    
             if (error.code === 'auth/email-already-in-use') {
                 setErrorMessage('This email is already registered.');
             } else {
@@ -116,6 +136,7 @@ const ParentSignUp = () => {
             setLoading(false);
         }
     };
+    
 
     return (
         <Container
@@ -175,6 +196,28 @@ const ParentSignUp = () => {
                             fullWidth
                         />
                     </Box>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            select
+                            label="Gender *"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            fullWidth
+                        >
+                            <MenuItem value="Male">Male</MenuItem>
+                            <MenuItem value="Female">Female</MenuItem>
+                        </TextField>
+                        <TextField
+                            label="Birth Date *"
+                            name="birthDate"
+                            value={formData.birthDate}
+                            onChange={handleInputChange}
+                            type="date"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
                     <TextField
                         label="Email *"
                         name="email"
@@ -204,65 +247,184 @@ const ParentSignUp = () => {
             )}
             {activeStep === 1 && (
                 <form>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                            Upload Profile Picture (Base64):
-                                        </Typography>
-                                        <TextField
-                                            type="file"
-                                            name="profilePicture"
-                                            onChange={handleFileChange}
-                                            slotProps   ={{ input: { accept: 'image/*' }, }}
-                                            fullWidth
-                                            sx={{ mb: 2 }}
-                                        />
-                                        {formData.profilePicture && (
-                                            <Box
-                                                component="img"
-                                                src={formData.profilePicture}
-                                                alt="Profile Preview"
-                                                sx={{
-                                                    width: '100%',
-                                                    maxWidth: 200,
-                                                    borderRadius: '50%',
-                                                    mt: 2,
-                                                    border: '2px solid #004951',
-                                                }}
-                                            />
-                                        )}
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Child & Days Specifications
+                    </Typography>
+                    <TextField
+                        label="Number of Children *"
+                        name="numberOfChildren"
+                        type="number"
+                        value={formData.numberOfChildren}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Children Ages *"
+                        name="childrenAges"
+                        value={formData.childrenAges}
+                        onChange={handleInputChange}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Specializations (e.g., allergies, special needs)"
+                        name="specializations"
+                        value={formData.specializations}
+                        onChange={handleInputChange}
+                        fullWidth
+                        multiline
+                        rows={3}
+                        sx={{ mb: 2 }}
+                    />
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Days & Hours Babysitter is Needed
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
+                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                            <Box
+                                key={day}
+                                onClick={() => handleDaySelection(day)}
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    border: '2px solid #f3b2ac',
+                                    backgroundColor: formData.availability.days.includes(day)
+                                        ? '#f3b2ac'
+                                        : 'transparent',
+                                    color: formData.availability.days.includes(day) ? '#fff' : '#4c3b34',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    userSelect: 'none',
+                                }}
+                            >
+                                {day.substring(0, 3).toUpperCase()}
+                            </Box>
+                        ))}
+                    </Box>
                     <FormControlLabel
                         control={
                             <Checkbox
-                                checked={formData.isFlexible}
+                                checked={isFlexible}
+                                onChange={(e) => setIsFlexible(e.target.checked)}
+                            />
+                        }
+                        label="Flexible Availability"
+                        sx={{ mb: 2 }}
+                    />
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Preferred Hours
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            label="Start Time"
+                            name="start"
+                            type="time"
+                            value={formData.availability.preferredHours.start}
+                            onChange={(e) =>
+                                setFormData((prevData) => ({
+                                    ...prevData,
+                                    availability: {
+                                        ...prevData.availability,
+                                        preferredHours: {
+                                            ...prevData.availability.preferredHours,
+                                            start: e.target.value,
+                                        },
+                                    },
+                                }))
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                        <TextField
+                            label="End Time"
+                            name="end"
+                            type="time"
+                            value={formData.availability.preferredHours.end}
+                            onChange={(e) =>
+                                setFormData((prevData) => ({
+                                    ...prevData,
+                                    availability: {
+                                        ...prevData.availability,
+                                        preferredHours: {
+                                            ...prevData.availability.preferredHours,
+                                            end: e.target.value,
+                                        },
+                                    },
+                                }))
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.availability.isFlexibleWithHours}
                                 onChange={(e) =>
                                     setFormData((prevData) => ({
                                         ...prevData,
-                                        isFlexible: e.target.checked,
+                                        availability: {
+                                            ...prevData.availability,
+                                            isFlexibleWithHours: e.target.checked,
+                                        },
                                     }))
                                 }
                             />
                         }
-                        label="I am flexible with the days"
+                        label="Flexible Hours"
+                        sx={{ mb: 2 }}
                     />
                 </form>
             )}
             {activeStep === 2 && (
                 <form>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        Additional Information
+                        Setup Profile
                     </Typography>
                     <TextField
-                        label="Additional Info"
-                        name="additionalInfo"
-                        value={formData.additionalInfo}
+                        label="Short Bio"
+                        name="bio"
+                        value={formData.bio}
                         onChange={handleInputChange}
                         fullWidth
                         multiline
                         rows={4}
                         sx={{ mb: 2 }}
                     />
-                </form>
-            )}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        Upload Profile Picture (Base64):
+                    </Typography>
+                    <TextField
+                        type="file"
+                        name="profilePicture"
+                        onChange={handleFileChange}
+                        InputProps={{ accept: 'image/*' }}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                    {formData.profilePicture && (
+                        <Box
+                            component="img"
+                            src={formData.profilePicture}
+                            alt="Profile Preview"
+                            sx={{
+                                width: '100%',
+                                maxWidth: 200,
+                                borderRadius: '50%',
+                                mt: 2,
+                                border: '2px solid #004951',
+                            }}
+                        />
+                    )}
+                    </form>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                 {activeStep > 0 && (
                     <Button variant="outlined" onClick={handleBack}>
                         Back

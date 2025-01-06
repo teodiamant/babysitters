@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, MenuItem, CircularProgress,
-        Alert, FormControlLabel, Checkbox,} from '@mui/material';
+        Alert, FormControlLabel, Checkbox, Tooltip,} from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -17,9 +17,9 @@ const BabysitterSignUp = () => {
     const [isFlexible, setIsFlexible] = useState(false); // Track if babysitter is flexible
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ firstName: '', lastName: '', gender: '', birthDate: '',
-            email: '', password: '', phoneNumber: '', experience: '', certifications: '', bio: '', 
-            profilePicture: '', availability: { days: [], preferredHours: { start: '', end: '' }, },
-    });
+            email: '', password: '', phoneNumber: '', location: '', experience: '', certifications: '', bio: '', 
+            profilePicture: '', availability: { days: [], preferredHours: { start: '', end: '' },
+            isFlexible: false, isFlexibleWithHours: false, },});
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -68,24 +68,19 @@ const BabysitterSignUp = () => {
         setLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
+    
+        let userCredential = null;
+    
         try {
-            const userCredential = await createUserWithEmailAndPassword(
+            // Step 1: Create user in Firebase Authentication
+            userCredential = await createUserWithEmailAndPassword(
                 FIREBASE_AUTH,
                 formData.email,
                 formData.password
             );
-
             const userId = userCredential.user.uid;
-
-            // Add to users collection
-            const userRef = doc(FIREBASE_DB, 'users', userId);
-            await setDoc(userRef, {
-                userId: userId,
-                email: formData.email,
-                role: 'babysitter',
-                createdAt: new Date(),
-            });
-
+    
+            // Step 2: Prepare babysitter data
             const babysitterDocData = {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
@@ -93,35 +88,46 @@ const BabysitterSignUp = () => {
                 birthDate: formData.birthDate,
                 email: formData.email,
                 phoneNumber: formData.phoneNumber,
+                location: formData.location,
                 experience: formData.experience,
                 certifications: formData.certifications,
                 bio: formData.bio,
                 profilePicture: formData.profilePicture,
                 availability: {
-                    ...formData.availability,
-                    isFlexible, // Include flexibility information
+                    days: formData.availability.days,
+                    preferredHours: formData.availability.preferredHours,
+                    isFlexibleWithHours: formData.availability.isFlexibleWithHours,
+                    isFlexible: isFlexible,
                 },
                 createdAt: new Date(),
             };
-
-            // Add both documents in Firestore
+    
+            // Step 3: Add to Firestore collections
             await Promise.all([
-                // Προσθήκη του χρήστη στη συλλογή "users"
                 setDoc(doc(FIREBASE_DB, 'users', userId), {
                     userId: userId,
                     email: formData.email,
                     role: 'babysitter',
                     createdAt: new Date(),
                 }),
-                // Προσθήκη του babysitter στη συλλογή "babysitters"
-                addDoc(collection(FIREBASE_DB, 'babysitters'), babysitterDocData),
+                setDoc(doc(FIREBASE_DB, 'babysitters', userId), babysitterDocData),
             ]);
-            
-
+    
             setSuccessMessage('Registration successful!');
-            setTimeout(() => navigate('/'), 2000);
+            setTimeout(() => navigate('/'), 1000);
         } catch (error) {
             console.error('Error saving user data:', error);
+    
+            // Rollback: Delete user from Firebase Authentication if registration fails
+            if (userCredential && userCredential.user) {
+                try {
+                    await userCredential.user.delete();
+                    console.log('User deleted from Firebase Authentication due to failure.');
+                } catch (authError) {
+                    console.error('Error deleting user from Firebase Authentication:', authError);
+                }
+            }
+    
             if (error.code === 'auth/email-already-in-use') {
                 setErrorMessage('This email is already registered.');
             } else {
@@ -131,6 +137,8 @@ const BabysitterSignUp = () => {
             setLoading(false);
         }
     };
+    
+    
     
 
 
@@ -214,6 +222,24 @@ const BabysitterSignUp = () => {
                             fullWidth
                         />
                     </Box>
+                    <Box sx={{ mb: 2 }}>
+                        <TextField
+                            label="Preferred work location *"
+                            name="location"
+                            value={formData.location}
+                            onChange={handleInputChange}
+                            fullWidth
+                            InputProps={{
+                                endAdornment: (
+                                    <Tooltip title="Specify the location you would like to work around">
+                                        <InfoOutlinedIcon
+                                            sx={{ color: '#795e53', cursor: 'pointer' }}
+                                        />
+                                    </Tooltip>
+                                ),
+                            }}
+                        />
+                    </Box>
                     <TextField
                         label="Email *"
                         name="email"
@@ -268,6 +294,7 @@ const BabysitterSignUp = () => {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Availability
                     </Typography>
+                    {/* Preferred Days (your existing code) */}
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
                         {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                             <Box
@@ -304,6 +331,72 @@ const BabysitterSignUp = () => {
                         label="Flexible Availability"
                         sx={{ mb: 2 }}
                     />
+
+                    {/* Preferred Hours Section */}
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Preferred Hours
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                            label="Start Time"
+                            name="start"
+                            type="time"
+                            value={formData.availability.preferredHours.start}
+                            onChange={(e) =>
+                                setFormData((prevData) => ({
+                                    ...prevData,
+                                    availability: {
+                                        ...prevData.availability,
+                                        preferredHours: {
+                                            ...prevData.availability.preferredHours,
+                                            start: e.target.value,
+                                        },
+                                    },
+                                }))
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                        <TextField
+                            label="End Time"
+                            name="end"
+                            type="time"
+                            value={formData.availability.preferredHours.end}
+                            onChange={(e) =>
+                                setFormData((prevData) => ({
+                                    ...prevData,
+                                    availability: {
+                                        ...prevData.availability,
+                                        preferredHours: {
+                                            ...prevData.availability.preferredHours,
+                                            end: e.target.value,
+                                        },
+                                    },
+                                }))
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.availability.isFlexibleWithHours}
+                                onChange={(e) =>
+                                    setFormData((prevData) => ({
+                                        ...prevData,
+                                        availability: {
+                                            ...prevData.availability,
+                                            isFlexibleWithHours: e.target.checked,
+                                        },
+                                    }))
+                                }
+                            />
+                        }
+                        label="I am flexible with work hours"
+                        sx={{ mb: 2 }}
+                    />
                 </form>
             )}
             {activeStep === 2 && (
@@ -328,7 +421,7 @@ const BabysitterSignUp = () => {
                         type="file"
                         name="profilePicture"
                         onChange={handleFileChange}
-                        slotProps   ={{ input: { accept: 'image/*' }, }}
+                        InputProps={{ accept: 'image/*' }}
                         fullWidth
                         sx={{ mb: 2 }}
                     />

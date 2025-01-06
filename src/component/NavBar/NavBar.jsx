@@ -3,8 +3,8 @@ import { AppBar, Typography, Toolbar, IconButton, Button, Drawer, List, ListItem
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { query, collection, where, getDocs } from 'firebase/firestore'; // Import doc and getDoc-babysitter
-import { FIREBASE_DB } from '../../config/firebase'; // Import your Firestore database instance-babysitter
+import { query, collection, where, getDocs } from 'firebase/firestore';
+import { FIREBASE_DB } from '../../config/firebase'; 
 import logo from '../../images/teo_logo.jpg';
 
 const NavBar = () => {
@@ -18,8 +18,9 @@ const NavBar = () => {
             if (firebaseUser) {
                 try {
                     const userEmail = firebaseUser.email;
-                    console.log("Firebase user email:", userEmail); 
+                    console.log("Firebase user email:", userEmail);
     
+                    // Query the 'users' collection to get the user's role
                     const usersQuery = query(
                         collection(FIREBASE_DB, 'users'),
                         where('email', '==', userEmail)
@@ -27,30 +28,78 @@ const NavBar = () => {
                     const usersSnapshot = await getDocs(usersQuery);
     
                     if (!usersSnapshot.empty) {
-                        const userDoc = usersSnapshot.docs[0]; // Παίρνουμε το πρώτο έγγραφο
+                        const userDoc = usersSnapshot.docs[0];
                         const userData = userDoc.data();
                         console.log("Fetched user data:", userData);
     
-                        setUser({
-                            id: userDoc.id, // Χρησιμοποιούμε το ID του εγγράφου
-                            name: firebaseUser.displayName || userEmail.split('@')[0],
-                            photoURL: firebaseUser.photoURL || "path/to/default/photo.jpg",
-                            role: userData.role, // Ρόλος από τη Firestore 
-                        });
+                        const role = userData.role; // Get the user's role
+    
+                        // Check the role and query the corresponding collection
+                        if (role === 'parent') {
+                            // Query the 'parents' collection
+                            const parentQuery = query(
+                                collection(FIREBASE_DB, 'parents'),
+                                where('email', '==', userEmail)
+                            );
+                            const parentSnapshot = await getDocs(parentQuery);
+    
+                            if (!parentSnapshot.empty) {
+                                const parentDoc = parentSnapshot.docs[0];
+                                const parentData = parentDoc.data();
+                                console.log("Fetched parent-specific data:", parentData);
+    
+                                setUser({
+                                    id: userDoc.id,
+                                    name: parentData.firstName,
+                                    photoURL: parentData.profilePicture || "path/to/default/photo.jpg",
+                                    role: role,
+                                });
+                            } else {
+                                console.warn("No data found in 'parents' collection for this email.");
+                            }
+    
+                        } else if (role === 'babysitter') {
+                            // Query the 'babysitters' collection
+                            const babysitterQuery = query(
+                                collection(FIREBASE_DB, 'babysitters'),
+                                where('email', '==', userEmail)
+                            );
+                            const babysitterSnapshot = await getDocs(babysitterQuery);
+    
+                            if (!babysitterSnapshot.empty) {
+                                const babysitterDoc = babysitterSnapshot.docs[0];
+                                const babysitterData = babysitterDoc.data();
+                                console.log("Fetched babysitter-specific data:", babysitterData);
+    
+                                setUser({
+                                    id: userDoc.id,
+                                    name: babysitterData.firstName,
+                                    photoURL: babysitterData.profilePicture || "path/to/default/photo.jpg",
+                                    role: role,
+                                });
+                            } else {
+                                console.warn("No data found in 'babysitters' collection for this email.");
+                            }
+    
+                        } else {
+                            console.warn("No specific role found for this email.");
+                            setUser(null); // Handle unknown roles by clearing the user state
+                        }
                     } else {
-                        console.warn("No user data found in Firestore for this email.");
+                        console.warn("No user data found in 'users' collection for this email.");
                     }
                 } catch (error) {
-                    console.error("Error fetching user role:", error);
+                    console.error("Error fetching user data:", error);
                 }
             } else {
-                console.log("No user is signed in."); 
-                setUser(null); 
+                console.log("No user is signed in.");
+                setUser(null);
             }
         });
     
-        return () => unsubscribe(); 
+        return () => unsubscribe();
     }, [auth]);
+    
     
 
     const handleLogout = async () => {
