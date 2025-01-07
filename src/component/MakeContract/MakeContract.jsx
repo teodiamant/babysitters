@@ -5,6 +5,7 @@ import { addDoc, collection } from 'firebase/firestore'; // Εισαγωγή add
 import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
+import { Pending } from '@mui/icons-material';
 
 const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile'];
 
@@ -20,6 +21,7 @@ const MakeContract = () => {
     const navigate = useNavigate();
     
     const [formData, setFormData] = useState({
+        state: '',
         duration: '',
         city: '',
         street: '',
@@ -68,6 +70,7 @@ const MakeContract = () => {
 
         try {
             const contractData = {
+                state: 'Pending',
                 duration: formData.duration,
                 city: formData.city,
                 street: formData.street,
