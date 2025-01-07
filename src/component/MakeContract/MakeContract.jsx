@@ -1,157 +1,178 @@
-// import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { Container, Typography, Button, TextField, Box } from '@mui/material';
-
-// const ContractForm = () => {
-//     const navigate = useNavigate();
-//     const [user] = useState('user');
-//     const [childAge, setChildAge] = useState('');
-//     const [days, setDays] = useState('');
-//     const [hours, setHours] = useState('');
-//     const [location, setLocation] = useState('');
-//     const [street, setStreet] = useState('');
-//     const [zipcode, setZipcode] = useState('');
-//     const [duration, setDuration] = useState('');
-
-//     const handleSubmit = () => {
-//         // Implement contract submission logic
-//         console.log("Contract submitted");
-//         navigate('/confirmation'); // Navigate to confirmation page
-//     };
-
-//     return (
-//         <Container maxWidth="sm">
-//             <Typography variant="h4" sx={{ mt: 4, mb: 2 }}>
-//                 Child Care Contract Creation
-//             </Typography>
-//             <Box component="form" noValidate autoComplete="off">
-//                 <Typography variant="body1" paragraph>
-//                     I, {user}, would like the babysitter to provide care for my child of {childAge} years old, on {days}, during {hours}, at my home
-//                     located in {location}, on street {street}, with the postal code {zipcode}, for a duration of {duration} months.
-//                 </Typography>
-//                 <TextField fullWidth label="Child's Age" variant="outlined" value={childAge} onChange={e => setChildAge(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Care Days" variant="outlined" value={days} onChange={e => setDays(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Care Hours" variant="outlined" value={hours} onChange={e => setHours(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Location" variant="outlined" value={location} onChange={e => setLocation(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Street" variant="outlined" value={street} onChange={e => setStreet(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Postal Code" variant="outlined" value={zipcode} onChange={e => setZipcode(e.target.value)} sx={{ mb: 2 }} />
-//                 <TextField fullWidth label="Contract Duration (months)" variant="outlined" value={duration} onChange={e => setDuration(e.target.value)} sx={{ mb: 2 }} />
-//                 <Button variant="contained" color="primary" fullWidth onClick={handleSubmit}>
-//                     Send Contract
-//                 </Button>
-//             </Box>
-//         </Container>
-//     );
-// };
-// export default ContractForm;
 import React, { useState } from 'react';
+import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, CircularProgress,
+        Alert, FormControlLabel, Checkbox } from '@mui/material';
+import { addDoc, collection } from 'firebase/firestore'; // Εισαγωγή addDoc
+import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Button, TextField, Box } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
-const ContractForm = () => {
+const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile'];
+
+const MakeContract = () => {
+    const { state } = useLocation();
+    const { babysitterDetails, userDetails } = state;
+
+    const [activeStep, setActiveStep] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isFlexible, setIsFlexible] = useState(false);
     const navigate = useNavigate();
-    const [user] = useState('user');
-    const [childAge, setChildAge] = useState('');
-    const [days, setDays] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [location, setLocation] = useState('');
-    const [street, setStreet] = useState('');
-    const [zipcode, setZipcode] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [duration, setDuration] = useState('');
+    
+    const [formData, setFormData] = useState({
+        duration: '',
+        city: '',
+        street: '',
+        postalCode: '', 
+        numberOfChildren: '', 
+        childrenAges: '', 
+        specializations: '', 
+        availability: { days: [], preferredHours: { start: '', end: '' }, isFlexibleWithHours: false },
+    });
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log("Contract submitted");
-        navigate('/confirmation'); // Navigate to confirmation page
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleDaySelection = (day) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            availability: {
+                ...prevData.availability,
+                days: prevData.availability.days.includes(day)
+                    ? prevData.availability.days.filter((d) => d !== day)
+                    : [...prevData.availability.days, day],
+            },
+        }));
+    };
+
+    const handleNext = async () => {
+        if (activeStep < steps.length - 1) {
+            setActiveStep(activeStep + 1);
+        } else {
+            await handleSubmit();
+        }
+    };
+
+    const handleBack = () => {
+        if (activeStep > 0) {
+            setActiveStep(activeStep - 1);
+        }
+    };
+
+    const handleSubmit = async () => {
+        setLoading(true);
+        setSuccessMessage('');
+        setErrorMessage('');
+
+        try {
+            const contractData = {
+                duration: formData.duration,
+                city: formData.city,
+                street: formData.street,
+                postalCode: formData.postalCode,
+                numberOfChildren: formData.numberOfChildren,
+                childrenAges: formData.childrenAges,
+                specializations: formData.specializations,
+                availability: {
+                    days: formData.availability.days,
+                    preferredHours: formData.availability.preferredHours,
+                    isFlexibleWithHours: formData.availability.isFlexibleWithHours,
+                    isFlexible: isFlexible,
+                },
+                createdAt: new Date(),
+                userDetails: userDetails, // Προσθήκη στοιχείων του χρήστη
+            babysitterDetails: babysitterDetails, // Προσθήκη στοιχείων της νταντάς
+                
+            };
+
+            // Αποθήκευση δεδομένων στη Firestore
+            try {
+                console.log("Contract Data: ", contractData); // Έλεγχος δεδομένων
+                await addDoc(collection(FIREBASE_DB, 'requests'), contractData); // Διορθώθηκε εδώ
+                console.log('Contract created successfully');
+                setSuccessMessage('Contract created successfully!');
+                navigate('/search');
+            } catch (error) {
+                setErrorMessage('Error creating contract: ' + error.message);
+                console.error('Error creating contract:', error);
+            }
+        } catch (error) {
+            setErrorMessage('Error saving user data: ' + error.message);
+            console.error('Error saving user data:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <Container maxWidth="sm">
-            <Typography variant="h4" sx={{ mt: 4, mb: 2 }}>
-                Child Care Contract Creation
+        <Container maxWidth="sm" sx={{ mt: 5, pb: 3, pt: 2, borderRadius: 2, boxShadow: 2, textAlign: 'center', backgroundColor: '#fff' }}>
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
+                {steps.map((label) => (
+                    <Step key={label}>
+                        <StepLabel>{label}</StepLabel>
+                    </Step>
+                ))}
+            </Stepper>
+            <Typography variant="h5" sx={{ mb: 3 }}>
+                Contract
             </Typography>
-            <form onSubmit={handleSubmit}>
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="body1">
-                        I, <strong>{user}</strong>, require a babysitter to provide care for my child, aged
-                        <TextField
-                            value={childAge}
-                            onChange={e => setChildAge(e.target.value)}
-                            size="small"
-                            type="number"
-                            sx={{ width: '80px', mx: 2 }}
-                        /> years, on the following days:
-                        <TextField
-                            value={days}
-                            onChange={e => setDays(e.target.value)}
-                            size="small"
-                            sx={{ width: '200px', mx: 2 }}
-                        /> from
-                        <TextField
-                            value={startTime}
-                            onChange={e => setStartTime(e.target.value)}
-                            type="time"
-                            size="small"
-                            sx={{ mx: 2 }}
-                        /> to
-                        <TextField
-                            value={endTime}
-                            onChange={e => setEndTime(e.target.value)}
-                            type="time"
-                            size="small"
-                            sx={{ mx: 2 }}
-                        />, at my residence located at
-                        <TextField
-                            value={location}
-                            onChange={e => setLocation(e.target.value)}
-                            size="small"
-                            sx={{ mx: 2 }}
-                        />, 
-                        <TextField
-                            value={street}
-                            onChange={e => setStreet(e.target.value)}
-                            size="small"
-                            sx={{ mx: 2 }}
-                        /> with postal code
-                        <TextField
-                            value={zipcode}
-                            onChange={e => setZipcode(e.target.value)}
-                            type="number"
-                            size="small"
-                            sx={{ mx: 2 }}
-                        />, starting on
-                        <TextField
-                            value={startDate}
-                            onChange={e => setStartDate(e.target.value)}
-                            type="date"
-                            size="small"
-                            sx={{ mx: 2 }}
-                        /> and ending on
-                        <TextField
-                            value={endDate}
-                            onChange={e => setEndDate(e.target.value)}
-                            type="date"
-                            size="small"
-                            sx={{ mx: 2 }}
-                        /> for a duration of
-                        <TextField
-                            value={duration}
-                            onChange={e => setDuration(e.target.value)}
-                            type="number"
-                            size="small"
-                            sx={{ width: '80px', mx: 2 }}
-                        /> months.
+            {successMessage && <Alert severity="success">{successMessage}</Alert>}
+            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+            
+            {activeStep === 0 && (
+                <form>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField label="Duration(months) *" name="duration" value={formData.duration} onChange={handleInputChange} fullWidth />
+                        <TextField label="City *" name="city" value={formData.city} onChange={handleInputChange} fullWidth />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField label="Street *" name="street" value={formData.street} onChange={handleInputChange} fullWidth />
+                        <TextField label="Postal Code *" name="postal code" value={formData.postalCode} onChange={handleInputChange} fullWidth />
+                    </Box>
+                </form>
+            )}
+            
+            {activeStep === 1 && (
+                <form>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Child & Days Specifications
                     </Typography>
-                </Box>
-                <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-                    Send Contract
+                    <TextField label="Number of Children *" name="numberOfChildren" type="number" value={formData.numberOfChildren} onChange={handleInputChange} fullWidth sx={{ mb: 2 }} />
+                    <TextField label="Children Ages *" name="childrenAges" value={formData.childrenAges} onChange={handleInputChange} fullWidth sx={{ mb: 2 }} />
+                    <Typography variant="h6" sx={{ mb: 2 }}>Days & Hours Babysitter is Needed</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2 }}>
+                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                            <Box key={day} onClick={() => handleDaySelection(day)} sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '2px solid #f3b2ac', backgroundColor: formData.availability.days.includes(day) ? '#f3b2ac' : 'transparent', color: formData.availability.days.includes(day) ? '#fff' : '#4c3b34', cursor: 'pointer', fontWeight: 'bold', userSelect: 'none' }}>
+                                {day.substring(0, 3).toUpperCase()}
+                            </Box>
+                        ))}
+                    </Box>
+                    <FormControlLabel control={<Checkbox checked={isFlexible} onChange={(e) => setIsFlexible(e.target.checked)} />} label="Flexible Availability" sx={{ mb: 2 }} />
+                    <Typography variant="h6" sx={{ mb: 2 }}>Preferred Hours</Typography>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField label="Start Time" name="start" type="time" value={formData.availability.preferredHours.start} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, preferredHours: { ...formData.availability.preferredHours, start: e.target.value } } })} InputLabelProps={{ shrink: true }} fullWidth />
+                        <TextField label="End Time" name="end" type="time" value={formData.availability.preferredHours.end} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, preferredHours: { ...formData.availability.preferredHours, end: e.target.value } } })} InputLabelProps={{ shrink: true }} fullWidth />
+                    </Box>
+                    <FormControlLabel control={<Checkbox checked={formData.availability.isFlexibleWithHours} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, isFlexibleWithHours: e.target.checked } })} />} label="Flexible Hours" sx={{ mb: 2 }} />
+                </form>
+            )}
+
+            {activeStep === 2 && (
+                <form>
+                    <TextField label="Specializations (e.g., allergies, special needs)" name="specializations" value={formData.specializations} onChange={handleInputChange} fullWidth multiline rows={3} sx={{ mb: 2 }} />
+                </form>
+            )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                {activeStep > 0 && <Button variant="outlined" onClick={handleBack}>Back</Button>}
+                <Button variant="contained" onClick={handleNext} sx={{ bgcolor: '#795e53', '&:hover': { bgcolor: '#4c3b34' } }} disabled={loading}>
+                    {loading ? <CircularProgress size={24} /> : activeStep === steps.length - 1 ? 'Submit' : 'Next'}
                 </Button>
-            </form>
+            </Box>
         </Container>
     );
 };
 
-export default ContractForm;
+export default MakeContract;

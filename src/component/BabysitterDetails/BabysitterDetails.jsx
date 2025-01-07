@@ -48,7 +48,15 @@ const BabysitterDetails = () => {
     const handleMakeContract = () => {
         const user = auth.currentUser;
         if (user) {
-            navigate('/make-contract', { state: { babysitterId: id } });
+            navigate('/make-contract', {
+                state: { 
+                    babysitterDetails: babysitter, 
+                    userDetails: { 
+                        uid: user.uid, 
+                        email: user.email, 
+                        displayName: user.displayName 
+                    }
+                }});
         } else {
             alert("Please sign in to make a contract.");
             navigate('/login');
