@@ -122,7 +122,7 @@ const ParentProfile = () => {
                 color="primary"
                 onClick={() => navigate(`/parent-settings/${email}`)}
               >
-                Go to Settings
+                Edit Profile
               </Button>
             </Box>
           </Paper>
