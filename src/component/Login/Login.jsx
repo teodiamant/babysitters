@@ -35,9 +35,9 @@ export default function Login() {
                 const userData = userSnapshot.docs[0].data();
 
                 if (userData.role === 'babysitter') {
-                    navigate(`/babysitter-profile/${user.uid}`);
+                    navigate(`/babysitter-profile/${user.email}`);
                 } else if (userData.role === 'parent') {
-                    navigate(`/parent-profile/${user.uid}`);
+                    navigate(`/parent-profile/${user.email}`);
                 } else {
                     console.error("Unknown user role:", userData.role);
                 }

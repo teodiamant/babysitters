@@ -50,7 +50,8 @@ const NavBar = () => {
     
                                 setUser({
                                     id: userDoc.id,
-                                    name: parentData.firstName,
+                                    email: userEmail,
+                                    name: parentData?.firstName,
                                     photoURL: parentData.profilePicture || "path/to/default/photo.jpg",
                                     role: role,
                                 });
@@ -73,6 +74,7 @@ const NavBar = () => {
     
                                 setUser({
                                     id: userDoc.id,
+                                    email: userEmail,
                                     name: babysitterData.firstName,
                                     photoURL: babysitterData.profilePicture || "path/to/default/photo.jpg",
                                     role: role,
@@ -108,15 +110,15 @@ const NavBar = () => {
     };
 
     const handleProfileClick = () => {
-        if (!user || !user.role) {
+        if (!user || !user.role|| !user.email) {
             console.warn("User or role is undefined:", user);
             return;
         }
     
         if (user.role === 'parent') {
-            navigate(`/parent-profile/${user.id}`);
+            navigate(`/parent-profile/${user.email}`);
         } else if (user.role === 'babysitter') {
-            navigate(`/babysitter-profile/${user.id}`);
+            navigate(`/babysitter-profile/${user.email}`);
         } else {
             console.warn("Unexpected user role:", user.role);
         }

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Container, TextField, Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
 import { useParams } from 'react-router-dom';
+import { doc } from 'firebase/firestore';
+
 
 const BabysitterSettings = () => {
-    const { userId } = useParams(); // Get userId from URL params
-    console.log("User ID:", userId);
+    const { email } = useParams(); // Λήψη του email από τα URL params
+    console.log("Babysitter Email:", email);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -19,16 +21,20 @@ const BabysitterSettings = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [docId, setDocId] = useState(null); // Για την αποθήκευση του ID του document
 
     useEffect(() => {
         const fetchBabysitterData = async () => {
             setLoading(true);
             try {
-                const docRef = doc(FIREBASE_DB, 'babysitters', userId);
-                const docSnap = await getDoc(docRef);
+                const babysittersRef = collection(FIREBASE_DB, 'babysitters');
+                const q = query(babysittersRef, where('email', '==', email));
+                const querySnapshot = await getDocs(q);
 
-                if (docSnap.exists()) {
-                    setFormData(docSnap.data());
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0]; // Υποθέτουμε ότι υπάρχει μόνο ένα αποτέλεσμα
+                    setFormData(doc.data());
+                    setDocId(doc.id); // Αποθήκευση του ID του document
                 } else {
                     setError('Babysitter data not found.');
                 }
@@ -41,7 +47,7 @@ const BabysitterSettings = () => {
         };
 
         fetchBabysitterData();
-    }, [userId]);
+    }, [email]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -60,11 +66,16 @@ const BabysitterSettings = () => {
     };
 
     const handleSave = async () => {
+        if (!docId) {
+            setError('Unable to update profile. Document ID not found.');
+            return;
+        }
+
         setSaving(true);
         setSuccessMessage('');
         setError('');
         try {
-            const docRef = doc(FIREBASE_DB, 'babysitters', userId);
+            const docRef = doc(FIREBASE_DB, 'babysitters', docId);
             await updateDoc(docRef, formData);
             setSuccessMessage('Profile updated successfully!');
         } catch (err) {

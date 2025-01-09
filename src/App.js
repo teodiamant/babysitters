@@ -51,14 +51,14 @@ function App() {
               <Route path="/signup-parent" element={<ParentSignUp />} />
               <Route path="/signup-babysitter" element={<BabysitterSignUp />} />
               <Route path="/babysitters/:id" element={<BabysitterDetails />} />
-              <Route path="/babysitter-settings/:userId" element={<BabysitterSettings />} />
-              <Route path="/paernt-settings" element={<ParentSettings />} />
+              <Route path="/babysitter-settings/:email" element={<BabysitterSettings />} />
+              <Route path="/parent-settings/:email" element={<ParentSettings />} />
               <Route path="/faqs" element={<FAQsPage1 />} />
               <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
               <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
               <Route path="/about" element={<WhatIsBabysitters />} />
               <Route path="/specifications" element={<SpecificationsPage />} />
-              <Route path="/parent-profile/:id" element={<ParentProfile/>} />
+              <Route path="/parent-profile/:email" element={<ParentProfile/>} />
               <Route path="/babysitter-profile/:email" element={<BabysitterProfile />} />
               <Route path="/terms" element={<TermsPage />} />
               {/* If you need profiles for babysitters or parents, add routes here */}

@@ -5,9 +5,8 @@ import { addDoc, collection } from 'firebase/firestore'; // Εισαγωγή add
 import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { Pending } from '@mui/icons-material';
 
-const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile'];
+const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile','Review'];
 
 const MakeContract = () => {
     const { state } = useLocation();
@@ -22,6 +21,8 @@ const MakeContract = () => {
     
     const [formData, setFormData] = useState({
         state: '',
+        payment:'',
+        startDate: '',
         duration: '',
         city: '',
         street: '',
@@ -68,9 +69,18 @@ const MakeContract = () => {
         setSuccessMessage('');
         setErrorMessage('');
 
+        const safeUserDetails = {
+            email: userDetails.email,
+            uid: userDetails.uid,
+            displayName: userDetails.name || "Anonymous",
+        };
+        
+
         try {
             const contractData = {
                 state: 'Pending',
+                payment:'false',
+                startDate: formData.startDate,
                 duration: formData.duration,
                 city: formData.city,
                 street: formData.street,
@@ -85,7 +95,7 @@ const MakeContract = () => {
                     isFlexible: isFlexible,
                 },
                 createdAt: new Date(),
-                userDetails: userDetails, // Προσθήκη στοιχείων του χρήστη
+                userDetails: safeUserDetails, // Προσθήκη στοιχείων του χρήστη
             babysitterDetails: babysitterDetails, // Προσθήκη στοιχείων της νταντάς
                 
             };
@@ -127,12 +137,15 @@ const MakeContract = () => {
             {activeStep === 0 && (
                 <form>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField label="Start Date *" name="startDate" type="date" value={formData.startDate} onChange={handleInputChange} InputLabelProps={{ shrink: true }} fullWidth />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                         <TextField label="Duration(months) *" name="duration" value={formData.duration} onChange={handleInputChange} fullWidth />
                         <TextField label="City *" name="city" value={formData.city} onChange={handleInputChange} fullWidth />
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                         <TextField label="Street *" name="street" value={formData.street} onChange={handleInputChange} fullWidth />
-                        <TextField label="Postal Code *" name="postal code" value={formData.postalCode} onChange={handleInputChange} fullWidth />
+                        <TextField label="Postal Code *" name="postalCode" value={formData.postalCode} onChange={handleInputChange} fullWidth />
                     </Box>
                 </form>
             )}
@@ -166,6 +179,23 @@ const MakeContract = () => {
                 <form>
                     <TextField label="Specializations (e.g., allergies, special needs)" name="specializations" value={formData.specializations} onChange={handleInputChange} fullWidth multiline rows={3} sx={{ mb: 2 }} />
                 </form>
+            )}
+
+            {activeStep === 3 && (
+                <Box>
+                    <Typography variant="h6">Review your details</Typography>
+                    <Typography variant="body1" sx={{ mt: 2 }}>
+                        Start Date: {formData.startDate}
+                    </Typography>
+                    <Typography variant="body1">Duration: {formData.duration} months</Typography>
+                    <Typography variant="body1">City: {formData.city}</Typography>
+                    <Typography variant="body1">Street: {formData.street}</Typography>
+                    <Typography variant="body1">Postal Code: {formData.postalCode}</Typography>
+                    <Typography variant="body1">Number of Children: {formData.numberOfChildren}</Typography>
+                    <Typography variant="body1">Children Ages: {formData.childrenAges}</Typography>
+                    <Typography variant="body1">Specializations: {formData.specializations}</Typography>
+                    <Typography variant="body1">Availability: {formData.availability.days.join(', ')}</Typography>
+                </Box>
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>

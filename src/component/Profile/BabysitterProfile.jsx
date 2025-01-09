@@ -5,6 +5,8 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { FIREBASE_DB } from "../../config/firebase";
 import {
@@ -18,13 +20,16 @@ import {
   Avatar,
   Paper,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 const BabysitterProfile = () => {
-  const [pendingAcceptedRequests, setPendingAcceptedRequests] = useState([]);
-  const [otherRequests, setOtherRequests] = useState([]);
+  const [allRequests, setAllRequests] = useState([]);
+  const [currentJob, setCurrentJob] = useState(null);
+  const [historyRequests, setHistoryRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { email } = useParams(); // Email από το URL param
+  const { email } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,35 +37,38 @@ const BabysitterProfile = () => {
       setLoading(true);
       try {
         const requestsRef = collection(FIREBASE_DB, "requests");
-  
-        // Ανάκτηση όλων των αιτημάτων για το email της νταντάς
+
+        // Fetch all requests for the babysitter
         const babysitterQuery = query(
           requestsRef,
           where("babysitterDetails.email", "==", email)
         );
         const requestsSnap = await getDocs(babysitterQuery);
-  
+
         if (!requestsSnap.empty) {
-          const allRequests = requestsSnap.docs.map((doc) => ({
+          const requests = requestsSnap.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
-  
-          // Διαχωρισμός αιτημάτων σε εκκρεμότητα/αποδεκτά και άλλα
-          setPendingAcceptedRequests(
-            allRequests.filter((request) =>
-              ["pending", "accepted"].includes(request.state)
-            )
+
+          setAllRequests(requests);
+
+          // Check for current job
+          const activeJob = requests.find(
+            (request) =>
+              request.state === "Accepted" &&
+              new Date(request.startDate) <= new Date()
           );
-          setOtherRequests(
-            allRequests.filter(
-              (request) => !["pending", "accepted"].includes(request.state)
-            )
-          );
+
+          setCurrentJob(activeJob || null);
+
+          // Get history requests
+          const history = requests.filter((request) => request.state === "Accepted");
+          setHistoryRequests(history);
         } else {
-          // Κανένα αίτημα δεν βρέθηκε
-          setPendingAcceptedRequests([]);
-          setOtherRequests([]);
+          setAllRequests([]);
+          setCurrentJob(null);
+          setHistoryRequests([]);
         }
       } catch (err) {
         setError("Failed to fetch requests");
@@ -68,10 +76,23 @@ const BabysitterProfile = () => {
       }
       setLoading(false);
     };
-  
+
     fetchRequests();
   }, [email]);
-  
+
+  const handleUpdateRequestState = async (requestId, newState) => {
+    try {
+      const requestRef = doc(FIREBASE_DB, "requests", requestId);
+      await updateDoc(requestRef, { state: newState });
+      setAllRequests((prevRequests) =>
+        prevRequests.map((request) =>
+          request.id === requestId ? { ...request, state: newState } : request
+        )
+      );
+    } catch (error) {
+      console.error("Error updating request state:", error);
+    }
+  };
 
   if (loading) {
     return <Typography>Loading...</Typography>;
@@ -105,7 +126,7 @@ const BabysitterProfile = () => {
                 fullWidth
                 variant="contained"
                 color="primary"
-                onClick={() => navigate("/babysitter-settings")}
+                onClick={() => navigate(`/babysitter-settings/${email}`)}
               >
                 Go to Settings
               </Button>
@@ -113,61 +134,99 @@ const BabysitterProfile = () => {
           </Paper>
         </Grid>
 
-        {/* Δεξιά Στήλη */}
-        <Grid item xs={12} md={8}>
-          <Grid container spacing={4}>
-            {/* Αιτήματα σε εκκρεμότητα ή αποδεκτά */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Pending or Accepted Requests
+        {/* Μέση Στήλη */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Current Job
+            </Typography>
+            {currentJob ? (
+              <Typography>
+                You are currently working for: {currentJob.parentName} <br />
+                Start Date: {new Date(currentJob.startDate).toLocaleDateString()}
               </Typography>
-              {pendingAcceptedRequests.length > 0 ? (
-                pendingAcceptedRequests.map((request) => (
-                  <Card key={request.id} sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Typography variant="body1">
-                        Request ID: {request.id}
-                      </Typography>
-                      <Typography variant="body1">
-                        Status: {request.state}
-                      </Typography>
-                      <Typography variant="body1">
-                        Parent Name: {request.parentName}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Typography>No requests found.</Typography>
-              )}
-            </Grid>
+            ) : (
+              <Typography>No current job.</Typography>
+            )}
+          </Paper>
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+            All Requests
+          </Typography>
+          {allRequests.length > 0 ? (
+            allRequests.map((request) => (
+              <Card key={request.id} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="body1">
+                    Request ID: {request.id}
+                  </Typography>
+                  <Typography variant="body1">
+                    Status: {request.state}
+                  </Typography>
+                  <Typography variant="body1">
+                    Parent Name: {request.parentName}
+                  </Typography>
+                  <Typography variant="body1">
+                    Start Date: {new Date(request.startDate).toLocaleDateString()}
+                  </Typography>
+                  {request.state === "Pending" && (
+                    <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() =>
+                          handleUpdateRequestState(request.id, "Accepted")
+                        }
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() =>
+                          handleUpdateRequestState(request.id, "Rejected")
+                        }
+                      >
+                        Reject
+                      </Button>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Typography>No requests found.</Typography>
+          )}
+        </Grid>
 
-            {/* Λοιπά Αιτήματα */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Other Requests
-              </Typography>
-              {otherRequests.length > 0 ? (
-                otherRequests.map((request) => (
-                  <Card key={request.id} sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Typography variant="body1">
-                        Request ID: {request.id}
-                      </Typography>
-                      <Typography variant="body1">
-                        Status: {request.state}
-                      </Typography>
-                      <Typography variant="body1">
-                        Parent Name: {request.parentName}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Typography>No requests found.</Typography>
-              )}
-            </Grid>
-          </Grid>
+        {/* Δεξιά Στήλη */}
+        <Grid item xs={12} md={4}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            History
+          </Typography>
+          {historyRequests.length > 0 ? (
+            historyRequests.map((request) => (
+              <Card key={request.id} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="body1">
+                    Parent Name: {request.parentName}
+                  </Typography>
+                  <Typography variant="body1">
+                    Start Date: {new Date(request.startDate).toLocaleDateString()}
+                  </Typography>
+                  <Typography variant="body1">
+                    Payment:{" "}
+                    {request.payment === "true" ? (
+                      <CheckCircleIcon sx={{ color: "green" }} />
+                    ) : (
+                      <CancelIcon sx={{ color: "red" }} />
+                    )}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Typography>No history found.</Typography>
+          )}
         </Grid>
       </Grid>
     </Container>
@@ -175,5 +234,3 @@ const BabysitterProfile = () => {
 };
 
 export default BabysitterProfile;
-
-
