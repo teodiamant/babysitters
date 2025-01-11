@@ -226,6 +226,7 @@
 //     </Box>
 //   );
 // }
+
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -242,9 +243,11 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  Rating,
 } from '@mui/material';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
+import { useNavigate } from 'react-router-dom';
 
 function calculateAge(birthDate) {
   const birthdate = new Date(birthDate);
@@ -257,21 +260,39 @@ function calculateAge(birthDate) {
   return age;
 }
 
-const BabysitterProfile = ({ babysitter }) => (
-  <Paper elevation={3} sx={{ display: 'flex', padding: 2, marginBottom: 2, borderRadius: '10px', cursor: 'pointer' }}>
-    <img
-      src={babysitter.profilePicture || 'default_image.jpg'}
-      alt="Babysitter"
-      style={{ width: 80, height: 80, borderRadius: '50%', marginRight: 16 }}
-    />
-    <Box>
-      <Typography variant="h6">{`${babysitter.firstName} ${babysitter.lastName}`}</Typography>
-      <Typography variant="body2">Age: {calculateAge(babysitter.birthDate)}</Typography>
-      <Typography variant="body2">Experience: {babysitter.experience} years</Typography>
-      <Typography variant="body2">Location: {babysitter.location}</Typography>
-    </Box>
-  </Paper>
-);
+const BabysitterProfile = ({ babysitter }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/babysitters/${babysitter.id}`);
+  };
+
+  return (
+    <Paper
+      elevation={3}
+      sx={{ display: 'flex', padding: 2, marginBottom: 2, borderRadius: '10px', cursor: 'pointer' }}
+      onClick={handleClick}
+    >
+      <img
+        src={babysitter.profilePicture || 'default_image.jpg'}
+        alt="Babysitter"
+        style={{ width: 80, height: 80, borderRadius: '50%', marginRight: 16 }}
+      />
+      <Box>
+        <Typography variant="h6">{`${babysitter.firstName} ${babysitter.lastName}`}</Typography>
+        <Typography variant="body2">Age: {calculateAge(babysitter.birthDate)}</Typography>
+        <Typography variant="body2">Experience: {babysitter.experience} years</Typography>
+        <Typography variant="body2">Location: {babysitter.location}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <Rating value={babysitter.rating?.average || 0} precision={0.5} readOnly />
+          <Typography variant="body2" sx={{ ml: 1 }}>
+            ({babysitter.rating?.count || 0} reviews)
+          </Typography>
+        </Box>
+      </Box>
+    </Paper>
+  );
+};
 
 const Search = () => {
   const [babysitters, setBabysitters] = useState([]);
@@ -293,12 +314,38 @@ const Search = () => {
 
   useEffect(() => {
     const fetchBabysitters = async () => {
-      const q = query(collection(FIREBASE_DB, 'babysitters'));
-      const querySnapshot = await getDocs(q);
-      const babysitterData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const babysittersQuery = query(collection(FIREBASE_DB, 'babysitters'));
+      const ratingsQuery = query(collection(FIREBASE_DB, 'ratings'));
+
+      const [babysitterSnapshot, ratingsSnapshot] = await Promise.all([
+        getDocs(babysittersQuery),
+        getDocs(ratingsQuery),
+      ]);
+
+      const ratingsMap = {};
+      ratingsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (!ratingsMap[data.babysitterDetails.email]) {
+          ratingsMap[data.babysitterDetails.email] = { total: 0, count: 0 };
+        }
+        ratingsMap[data.babysitterDetails.email].total += data.rating;
+        ratingsMap[data.babysitterDetails.email].count += 1;
+      });
+
+      const babysitterData = babysitterSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        const email = data.email;
+        const ratingInfo = ratingsMap[email] || { total: 0, count: 0 };
+        return {
+          id: doc.id,
+          ...data,
+          rating: {
+            average: ratingInfo.count > 0 ? ratingInfo.total / ratingInfo.count : 0,
+            count: ratingInfo.count,
+          },
+        };
+      });
+
       setBabysitters(babysitterData);
       setFilteredBabysitters(babysitterData);
     };
@@ -307,24 +354,35 @@ const Search = () => {
   }, []);
 
   const applyFilters = () => {
-    let filtered = babysitters.filter(b => {
+    let filtered = babysitters.filter((b) => {
       const age = calculateAge(b.birthDate);
       const matchesAge =
         (filters.ageMin === '' || age >= parseInt(filters.ageMin)) &&
         (filters.ageMax === '' || age <= parseInt(filters.ageMax));
       const matchesExperience = filters.experienceMin === '' || b.experience >= parseInt(filters.experienceMin);
-      const matchesLocation = filters.location === '' || (b.location && b.location.toLowerCase().includes(filters.location.toLowerCase()));
+      const matchesLocation =
+        filters.location === '' || (b.location && b.location.toLowerCase().includes(filters.location.toLowerCase()));
       const matchesGender = filters.gender === '' || b.gender === filters.gender;
       const matchesFlexibleHours = !filters.isFlexibleWithHours || b.availability?.isFlexibleWithHours;
-      const matchesDays = filters.days.length === 0 || filters.days.every(day => b.availability?.days.includes(day));
-      const matchesStartTime = !filters.startTime || (b.availability?.preferredHours?.start >= filters.startTime);
-      const matchesEndTime = !filters.endTime || (b.availability?.preferredHours?.end <= filters.endTime);
+      const matchesDays =
+        filters.days.length === 0 || filters.days.every((day) => b.availability?.days.includes(day));
+      const matchesStartTime = !filters.startTime || b.availability?.preferredHours?.start >= filters.startTime;
+      const matchesEndTime = !filters.endTime || b.availability?.preferredHours?.end <= filters.endTime;
 
-      return matchesAge && matchesExperience && matchesLocation && matchesGender && matchesFlexibleHours && matchesDays && matchesStartTime && matchesEndTime;
+      return (
+        matchesAge &&
+        matchesExperience &&
+        matchesLocation &&
+        matchesGender &&
+        matchesFlexibleHours &&
+        matchesDays &&
+        matchesStartTime &&
+        matchesEndTime
+      );
     });
 
     if (sortBy === 'score') {
-      filtered = filtered.sort((a, b) => (b.score || 0) - (a.score || 0)); // Αν η βαθμολογία δεν υπάρχει, υπολογίζεται ως 0
+      filtered = filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
     }
 
     setFilteredBabysitters(filtered);
@@ -348,17 +406,17 @@ const Search = () => {
   };
 
   const handleDaySelection = (day) => {
-    setFilters(prevFilters => ({
+    setFilters((prevFilters) => ({
       ...prevFilters,
       days: prevFilters.days.includes(day)
-        ? prevFilters.days.filter(d => d !== day)
+        ? prevFilters.days.filter((d) => d !== day)
         : [...prevFilters.days, day],
     }));
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prevFilters => ({
+    setFilters((prevFilters) => ({
       ...prevFilters,
       [name]: value,
     }));
@@ -410,11 +468,7 @@ const Search = () => {
             />
             <FormControl fullWidth margin="normal">
               <InputLabel>Gender</InputLabel>
-              <Select
-                name="gender"
-                value={filters.gender}
-                onChange={handleInputChange}
-              >
+              <Select name="gender" value={filters.gender} onChange={handleInputChange}>
                 <MenuItem value="">Any</MenuItem>
                 <MenuItem value="Male">Male</MenuItem>
                 <MenuItem value="Female">Female</MenuItem>
@@ -424,7 +478,7 @@ const Search = () => {
               Availability
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                 <Button
                   key={day}
                   variant={filters.days.includes(day) ? 'contained' : 'outlined'}
@@ -439,7 +493,7 @@ const Search = () => {
               control={
                 <Checkbox
                   checked={filters.isFlexibleWithHours}
-                  onChange={e => setFilters(prev => ({ ...prev, isFlexibleWithHours: e.target.checked }))}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, isFlexibleWithHours: e.target.checked }))}
                 />
               }
               label="Flexible Hours"
@@ -465,10 +519,7 @@ const Search = () => {
             <Box sx={{ my: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>Sort By</InputLabel>
-                <Select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
+                <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                   <MenuItem value="">None</MenuItem>
                   <MenuItem value="score">Score</MenuItem>
                 </Select>
@@ -492,7 +543,7 @@ const Search = () => {
           </Typography>
           {filteredBabysitters
             .slice((page - 1) * itemsPerPage, page * itemsPerPage)
-            .map(babysitter => (
+            .map((babysitter) => (
               <BabysitterProfile key={babysitter.id} babysitter={babysitter} />
             ))}
           <Pagination
@@ -509,4 +560,3 @@ const Search = () => {
 };
 
 export default Search;
-
