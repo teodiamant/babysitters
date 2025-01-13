@@ -8,8 +8,6 @@ import ParentProfile from './component/Profile/ParentProfile';
 import BabysitterProfile from './component/Profile/BabysitterProfile';
 import BabysitterSettings from './component/UserSettings/BabysitterSettings';
 import ParentSettings from './component/UserSettings/ParentSettings'; 
-import Profile from './component/Profile/Profile';
-import EditBabysitterProfile from './component/Profile/editBabysitterProfile';
 import Footer from './component/Footer/Footer';
 import NavBar from './component/NavBar/NavBar';
 import MakeContract from './component/MakeContract/MakeContract';
@@ -21,6 +19,7 @@ import TermsPage from './component/Footer/TermsPage';
 import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
 import Search from './component/Search/Search';
 import BabysitterDetails from './component/BabysitterDetails/BabysitterDetails';
+import Breadcrumbs from './component/Breadcrunbs/Breadcrumbs';
 
 function App() {
   return (
@@ -34,6 +33,7 @@ function App() {
             minHeight: "100vh", // Ensure full viewport height
           }}
         >
+           <Breadcrumbs />
           <main
             style={{
               flexGrow: 1, // Allow main content to grow and push footer to the bottom
@@ -43,9 +43,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/search" element={<Search />} />
-              <Route path="profile" element={<Profile />} />
               <Route path="/make-contract" element={<MakeContract />} />
-              <Route path="/edit-babysitter-profile" element={<EditBabysitterProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup-landing" element={<SignUpLandingPage />} />
               <Route path="/signup-parent" element={<ParentSignUp />} />
@@ -57,6 +55,8 @@ function App() {
               <Route path="/faqs/parents" element={<FAQsPage2 section="parents" />} />
               <Route path="/faqs/babysitters" element={<FAQsPage2 section="babysitters" />} />
               <Route path="/about" element={<WhatIsBabysitters />} />
+              <Route path="/Home" element={<LandingPage />} />
+              <Route path="/services" element={<SpecificationsPage />} />
               <Route path="/specifications" element={<SpecificationsPage />} />
               <Route path="/parent-profile/:email" element={<ParentProfile/>} />
               <Route path="/babysitter-profile/:email" element={<BabysitterProfile />} />
