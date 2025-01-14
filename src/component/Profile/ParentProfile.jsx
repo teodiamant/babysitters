@@ -10,6 +10,7 @@ import {
   addDoc,
   doc,
   deleteDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { FIREBASE_DB } from "../../config/firebase";
 import {
@@ -38,6 +39,7 @@ const ParentProfile = () => {
   const [error, setError] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null); // For managing dialog details
   const { email } = useParams();
+  const [chats, setChats] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,7 +93,21 @@ const ParentProfile = () => {
       }
       setLoading(false);
     };
-
+    const fetchChats = async () => {
+      try {
+        const chatsQuery = query(
+          collection(FIREBASE_DB, "chats"),
+          where("participants", "array-contains", email)
+        );
+        const chatsSnap = await getDocs(chatsQuery);
+  
+        setChats(chatsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      } catch (err) {
+        console.error("Error fetching chats:", err);
+      }
+    };
+  
+    fetchChats();
     fetchRequests();
   }, [email]);
 
@@ -191,6 +207,45 @@ const handleCloseDetails = () => {
   setSelectedRequest(null);
 };  
 
+const handleViewChat = async (parentEmail, babysitterEmail) => {
+  try {
+    // Εύρεση υπάρχοντος chat
+    const chatsQuery = query(
+      collection(FIREBASE_DB, "chats"),
+      where("participants", "array-contains", parentEmail)
+    );
+    const chatsSnap = await getDocs(chatsQuery);
+
+    // Έλεγχος αν υπάρχει chat με τον babysitter
+    let existingChat = null;
+    chatsSnap.forEach((doc) => {
+      const data = doc.data();
+      if (data.participants.includes(babysitterEmail)) {
+        existingChat = { id:doc.id, ...data };
+      }
+    });
+
+    // Αν υπάρχει ήδη το chat, κάνε navigate σε αυτό
+    if (existingChat) {
+      navigate(`/chat/${existingChat.id}`, { state: { userEmail: parentEmail } });
+      return;
+    }
+
+    // Αν δεν υπάρχει, δημιούργησε νέο chat
+    const newChatRef = await addDoc(collection(FIREBASE_DB, "chats"), {
+      participants: [parentEmail, babysitterEmail], // Emails και των δύο χρηστών
+      createdAt: serverTimestamp(),
+    });
+
+    // Μεταφορά στο νέο chat
+    navigate(`/chat/${newChatRef.id}`, { state: { userEmail: parentEmail } });
+  } catch (error) {
+    console.error("Error handling chat:", error);
+    alert("Failed to open chat. Please try again.");
+  }
+};
+
+
   if (loading) {
     return <Typography>Loading...</Typography>;
   }
@@ -229,6 +284,28 @@ const handleCloseDetails = () => {
               </Button>
             </Box>
           </Paper>
+          <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Active Chats
+          </Typography>
+          {chats.length > 0 ? (
+            chats.map((chat) => (
+              <Button
+                key={chat.id}
+                fullWidth
+                variant="outlined"
+                sx={{ mt: 1 }}
+                onClick={() =>
+                  navigate(`/chat/${chat.id}`, { state: { userEmail: email } })
+                }
+              >
+                Chat with {chat.participants.find((participant) => participant !== email)}
+              </Button>
+            ))
+          ) : (
+            <Typography>No active chats.</Typography>
+          )}
+        </Box>
         </Grid>
 
         {/* Δεξιά Στήλη */}
@@ -242,7 +319,7 @@ const handleCloseDetails = () => {
               {currentJob ? (
                 <>
                   <Typography>
-                    Babysitter: {currentJob.babysitterDetails.name}
+                    Babysitter: {currentJob.babysitterDetails.firstName}
                     <br />
                     Start Date:{" "}
                     {new Date(currentJob.startDate).toLocaleDateString()}
@@ -279,7 +356,7 @@ const handleCloseDetails = () => {
                       Status: {request.state}
                     </Typography>
                     <Typography variant="body1">
-                      Babysitter Name: {request.babysitterDetails.name}
+                      Babysitter Name: {request.babysitterDetails.firstName}
                     </Typography>
                     <Typography variant="body1">
                       Start Date:{" "}
@@ -301,6 +378,15 @@ const handleCloseDetails = () => {
                           Delete
                         </Button>
                       )}
+                      <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() =>
+                        handleViewChat(request.userDetails.email, request.babysitterDetails.email)
+                      }
+                    >
+                      View Chat
+                    </Button>
                     </Box>
                     
                     {request.state === "Accepted" && (
@@ -351,7 +437,7 @@ const handleCloseDetails = () => {
       <Card key={job.id} sx={{ mb: 2 }}>
         <CardContent>
           <Typography variant="body1">
-            Babysitter Name: {job.babysitterDetails.name}
+            Babysitter Name: {job.babysitterDetails.firstName}
           </Typography>
           <Typography variant="body1">
             Start Date: {new Date(job.startDate).toLocaleDateString()}

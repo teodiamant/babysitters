@@ -20,6 +20,7 @@ import WhatIsBabysitters from './component/Footer/WhatIsBabysitters';
 import Search from './component/Search/Search';
 import BabysitterDetails from './component/BabysitterDetails/BabysitterDetails';
 import Breadcrumbs from './component/Breadcrunbs/Breadcrumbs';
+import UsersChat from "./component/UsersChat/UsersChat";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           >
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/chat/:chatId" element={<UsersChat />} />
               <Route path="/search" element={<Search />} />
               <Route path="/make-contract" element={<MakeContract />} />
               <Route path="/login" element={<Login />} />
