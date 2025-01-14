@@ -30,17 +30,79 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { onAuthStateChanged, getAuth } from "firebase/auth";
+
 
 const ParentProfile = () => {
   const [requests, setRequests] = useState([]);
   const [currentJob, setCurrentJob] = useState(null);
   const [pastJobs, setPastJobs] = useState([]); // Ιστορικό συνεργασιών
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null); // For managing dialog details
   const { email } = useParams();
   const [chats, setChats] = useState([]);
   const navigate = useNavigate();
+  const auth = getAuth();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userEmail = firebaseUser.email;
+
+          // Query the 'users' collection to get the user's role
+          const usersQuery = query(
+            collection(FIREBASE_DB, "users"),
+            where("email", "==", userEmail)
+          );
+          const usersSnapshot = await getDocs(usersQuery);
+
+          if (!usersSnapshot.empty) {
+            const userDoc = usersSnapshot.docs[0];
+            const userData = userDoc.data();
+
+            const role = userData.role; // Get the user's role
+
+            if (role === "parent") {
+              // Query the 'parents' collection
+              const parentQuery = query(
+                collection(FIREBASE_DB, "parents"),
+                where("email", "==", userEmail)
+              );
+              const parentSnapshot = await getDocs(parentQuery);
+
+              if (!parentSnapshot.empty) {
+                const parentDoc = parentSnapshot.docs[0];
+                const parentData = parentDoc.data();
+
+                setUser({
+                  id: userDoc.id,
+                  email: userEmail,
+                  name: parentData?.firstName,
+                  photoURL: parentData.profilePicture || "path/to/default/photo.jpg",
+                  role: role,
+                });
+              } else {
+                console.warn("No data found in 'parents' collection for this email.");
+              }
+            } else {
+              console.warn("Role not supported for this component.");
+            }
+          } else {
+            console.warn("No user data found in 'users' collection for this email.");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      } else {
+        console.log("No user is signed in.");
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -106,7 +168,6 @@ const ParentProfile = () => {
         console.error("Error fetching chats:", err);
       }
     };
-  
     fetchChats();
     fetchRequests();
   }, [email]);
@@ -263,11 +324,11 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
             <Box sx={{ textAlign: "center" }}>
               <Avatar
                 alt="Parent Profile"
-                src="/static/images/avatar/2.jpg"
+                src={user?.photoURL|| "path/to/default/photo.jpg"}
                 sx={{ width: 120, height: 120, mx: "auto", mb: 2 }}
               />
               <Typography variant="h5" gutterBottom>
-                Parent Name
+              {user?.name || "Parent Name"}
               </Typography>
               <Typography variant="body1" color="textSecondary">
                 Email: {email}
@@ -546,7 +607,7 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                         Parent Name: {selectedRequest.userDetails.displayName || "Anonymous"}
                       </Typography>
                       <Typography variant="body1">Parent Email: {selectedRequest.userDetails.email}</Typography>
-                      <Typography variant="body1">Babysitter Name: {selectedRequest.babysitterDetails.name}</Typography>
+                      <Typography variant="body1">Babysitter Name: {selectedRequest.babysitterDetails.firstName} {selectedRequest.babysitterDetails.lastName}</Typography>
                       <Typography variant="body1">Babysitter Email: {selectedRequest.babysitterDetails.email}</Typography>
                       <Typography variant="body1">Start Date: {new Date(selectedRequest.startDate).toLocaleDateString()}</Typography>
                       <Typography variant="body1">Duration: {selectedRequest.duration} months</Typography>

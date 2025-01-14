@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, CircularProgress,
         Alert, FormControlLabel, Checkbox } from '@mui/material';
-import { addDoc, collection } from 'firebase/firestore'; // Εισαγωγή addDoc
+import { addDoc, collection,getDocs,where,query } from 'firebase/firestore'; // Εισαγωγή addDoc
 import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
@@ -64,18 +64,33 @@ const MakeContract = () => {
         }
     };
 
+    const fetchParentDetails = async (email) => {
+        const parentQuery = query(
+            collection(FIREBASE_DB, 'parents'),
+            where('email', '==', email)
+        );
+        const parentSnapshot = await getDocs(parentQuery);
+        if (!parentSnapshot.empty) {
+            const parentDoc = parentSnapshot.docs[0];
+            return parentDoc.data(); // Επιστρέψτε τα δεδομένα του γονέα
+        } else {
+            console.warn('Parent data not found');
+            return null;
+        }
+    };
+    
+
     const handleSubmit = async () => {
         setLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
 
-        const safeUserDetails = {
-            email: userDetails.email,
-            uid: userDetails.uid,
-            displayName: userDetails.name || "Anonymous",
-        };
-        
+        const parentDetails = await fetchParentDetails(userDetails.email);
 
+        if (!parentDetails) {
+            setErrorMessage('Failed to fetch parent details');
+            return;
+        }
         try {
             const contractData = {
                 state: 'Pending',
@@ -95,7 +110,11 @@ const MakeContract = () => {
                     isFlexible: isFlexible,
                 },
                 createdAt: new Date(),
-                userDetails: safeUserDetails, // Προσθήκη στοιχείων του χρήστη
+                userDetails: {
+                    ...userDetails,
+                    ...parentDetails,
+                    displayName: `${parentDetails.firstName} ${parentDetails.lastName}` || "Anonymous",
+                },// Προσθήκη στοιχείων του χρήστη
             babysitterDetails: babysitterDetails, // Προσθήκη στοιχείων της νταντάς
                 
             };
