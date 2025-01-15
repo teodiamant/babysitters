@@ -11,6 +11,7 @@ import {
   doc,
   deleteDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { FIREBASE_DB } from "../../config/firebase";
 import {
@@ -173,32 +174,39 @@ const ParentProfile = () => {
     fetchRequests();
   }, [email]);
 
-  const handleTogglePayment = async (requestId, newPaymentStatus) => {
+  const handleTogglePayment = async (jobId, newPaymentStatus) => {
     try {
-      const requestRef = doc(FIREBASE_DB, "requests", requestId);
-
-      await updateDoc(requestRef, { payment: newPaymentStatus });
-
-      setRequests((prevRequests) =>
-        prevRequests.map((request) =>
-          request.id === requestId
-            ? { ...request, payment: newPaymentStatus }
-            : request
-        )
-      );
+      const jobRef = doc(FIREBASE_DB, "jobs", jobId);
+  
+      // Λήψη της τρέχουσας κατάστασης από τη βάση
+      const jobSnapshot = await getDoc(jobRef);
+      const jobData = jobSnapshot.data();
+  
+      if (jobData.payment === "Pending") {
+        // Ενημέρωση της κατάστασης μόνο αν είναι ακόμη "Pending"
+        await updateDoc(jobRef, { payment: newPaymentStatus });
+  
+        // Ενημέρωση του τοπικού state
+        setPastJobs((prevJobs) =>
+          prevJobs.map((job) =>
+            job.id === jobId ? { ...job, payment: newPaymentStatus } : job
+          )
+        );
+      } else {
+        console.warn("Payment status can only be changed once when it is 'Pending'.");
+      }
     } catch (error) {
-      console.error("Error updating payment status:", error);
+      console.error("Failed to update payment status:", error);
     }
   };
+  
 
   const handleRatingSubmit = async (job, rating, comment) => {
     if (!job.babysitterDetails.email || !job.userDetails.email || !job.id) {
-        alert("Missing job or user details.");
         return;
     }
 
     if (!rating) {
-        alert("Please provide a rating before submitting.");
         return;
     }
 
@@ -239,11 +247,9 @@ const ParentProfile = () => {
             };
 
             await addDoc(ratingsRef, ratingData);
-            alert("Rating submitted successfully!");
         }
     } catch (error) {
         console.error("Error submitting rating:", error);
-        alert("Failed to submit rating.");
     }
 };
 
@@ -254,10 +260,8 @@ const ParentProfile = () => {
       setRequests((prevRequests) =>
         prevRequests.filter((request) => request.id !== requestId)
       );
-      alert("Request deleted successfully!");
     } catch (error) {
       console.error("Error deleting request:", error);
-      alert("Failed to delete request.");
     }
   };
 
@@ -371,7 +375,6 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     navigate(`/chat/${newChatRef.id}`, { state: { userEmail: parentEmail } });
   } catch (error) {
     console.error("Error handling chat:", error);
-    alert("Failed to open chat. Please try again.");
   }
 };
 
@@ -492,104 +495,103 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     </Paper>
           </Grid>
           {/* Όλα τα Αιτήματα */}
-<Grid item xs={12} sx={{ mt: 4 }}>
+          <Grid item xs={12} sx={{ mt: 4 }}>
   <Typography variant="h6" sx={{ mb: 2 }}>
     Your Requests
   </Typography>
   {requests.length > 0 ? (
-    requests.map((request) => (
-      <Card key={request.id} sx={{ mb: 2 }}>
-        <CardContent sx={{ display: "flex", alignItems: "center", gap: 3, flexDirection: { xs: "column", md: "row" }, }}>
-          {/* Φωτογραφία Νταντάς */}
-          <img
-            src={request.babysitterDetails.profilePicture || "default_image.jpg"}
-            alt="Babysitter"
-            style={{
-              width: 100,
-              height: 100,
-              borderRadius: "50%",
-              objectFit: "cover",
+    requests
+      .filter(
+        (request) =>
+          request.id !== currentJob?.id && // Εξαίρεση του currentJob
+          !pastJobs.some((job) => job.id === request.id) // Εξαίρεση των pastJobs
+      )
+      .map((request) => (
+        <Card key={request.id} sx={{ mb: 2 }}>
+          <CardContent
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              flexDirection: { xs: "column", md: "row" },
             }}
-          />
-          {/* Πληροφορίες */}
-          <Box sx={{ flex: 1, textAlign: "left" }}>
-            <Typography variant="body1">
-              <strong>Request ID:</strong> {request.id}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Status:</strong> {request.state}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Babysitter Name:</strong> {request.babysitterDetails.firstName}{" "}
-              {request.babysitterDetails.lastName}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Start Date:</strong> {new Date(request.startDate).toLocaleDateString()}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Days:</strong> {request.availability.days.join(", ")}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Hours:</strong> {request.availability.preferredHours.start} -{" "}
-              {request.availability.preferredHours.end}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Address:</strong> {request.street}, {request.city}, {request.postalCode}
-            </Typography>
-          </Box>
-        </CardContent>
-        <CardContent>
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}>
-            <Button variant="outlined" onClick={() => handleOpenDetails(request)}>
-              View Details
-            </Button>
-            {request.state === "Pending" && (
+          >
+            {/* Φωτογραφία Νταντάς */}
+            <img
+              src={request.babysitterDetails.profilePicture || "default_image.jpg"}
+              alt="Babysitter"
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+            {/* Πληροφορίες */}
+            <Box sx={{ flex: 1, textAlign: "left" }}>
+              <Typography variant="body1">
+                <strong>Request ID:</strong> {request.id}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Status:</strong> {request.state}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Babysitter Name:</strong> {request.babysitterDetails.firstName}{" "}
+                {request.babysitterDetails.lastName}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Start Date:</strong>{" "}
+                {new Date(request.startDate).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Days:</strong> {request.availability.days.join(", ")}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Hours:</strong>{" "}
+                {request.availability.preferredHours.start} -{" "}
+                {request.availability.preferredHours.end}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Address:</strong> {request.street}, {request.city},{" "}
+                {request.postalCode}
+              </Typography>
+            </Box>
+          </CardContent>
+          <CardContent>
+            <Box sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}>
+              <Button variant="outlined" onClick={() => handleOpenDetails(request)}>
+                View Details
+              </Button>
+              {request.state === "Pending" && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleDeleteRequest(request.id)}
+                >
+                  Delete
+                </Button>
+              )}
               <Button
                 variant="contained"
-                color="error"
-                onClick={() => handleDeleteRequest(request.id)}
+                color="primary"
+                onClick={() =>
+                  handleViewChat(
+                    request.userDetails.email,
+                    request.babysitterDetails.email
+                  )
+                }
               >
-                Delete
+                View Chat
               </Button>
-            )}
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() =>
-                handleViewChat(
-                  request.userDetails.email,
-                  request.babysitterDetails.email
-                )
-              }
-            >
-              View Chat
-            </Button>
-            {request.state === "Accepted" && (
-              <>
-                <Button
-                  variant={request.payment === "true" ? "contained" : "outlined"}
-                  color="success"
-                  onClick={() => handleTogglePayment(request.id, "true")}
-                >
-                  Accepted
-                </Button>
-                <Button
-                  variant={request.payment === "false" ? "contained" : "outlined"}
-                  color="error"
-                  onClick={() => handleTogglePayment(request.id, "false")}
-                >
-                  Rejected
-                </Button>
-              </>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-    ))
+            </Box>
+          </CardContent>
+        </Card>
+      ))
   ) : (
     <Typography>No requests found.</Typography>
   )}
 </Grid>
+
 
 
           {/* Ιστορικό Συνεργασιών */}
@@ -633,6 +635,31 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
             <strong>Duration:</strong> {job.duration} months
           </Typography>
         </Box>
+        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+  {job.payment === "Pending" ? (
+    <>
+      <Button
+        variant="contained"
+        color="success"
+        onClick={() => handleTogglePayment(job.id, "true")}
+      >
+        Accept
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        onClick={() => handleTogglePayment(job.id, "false")}
+      >
+        Reject
+      </Button>
+    </>
+  ) : (
+    <Typography variant="body2">
+      Payment Status: {job.payment === "true" ? "Accepted" : "Rejected"}
+    </Typography>
+  )}
+</Box>
+
         </CardContent>
 
         {/* Βαθμολογία */}

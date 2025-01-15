@@ -26,6 +26,9 @@ import {
   DialogContent,
   DialogActions,
   Rating,
+  TextField,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 
@@ -269,6 +272,72 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     alert("Failed to open chat. Please try again.");
   }
 };
+const [formData, setFormData] = useState({
+  availability: {
+    days: [],
+    preferredHours: {
+      start: "",
+      end: "",
+    },
+    isFlexibleWithHours: false,
+  },
+});
+
+useEffect(() => {
+  const fetchBabysitterAvailability = async () => {
+    try {
+      const babysitterQuery = query(
+        collection(FIREBASE_DB, "babysitters"),
+        where("email", "==", email) // Χρησιμοποιώντας το email της νταντάς
+      );
+      const babysitterSnapshot = await getDocs(babysitterQuery);
+
+      if (!babysitterSnapshot.empty) {
+        const babysitterData = babysitterSnapshot.docs[0].data();
+        setFormData({
+          availability: babysitterData.availability || {
+            days: [],
+            preferredHours: {
+              start: "",
+              end: "",
+            },
+            isFlexibleWithHours: false,
+          },
+        });
+      } else {
+        console.warn("Babysitter data not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching babysitter availability:", error);
+    }
+  };
+
+  fetchBabysitterAvailability();
+}, [email]);
+
+
+const handleDaySelection = (day) => {
+  setFormData((prev) => ({
+    ...prev,
+    availability: {
+      ...prev.availability,
+      days: prev.availability.days.includes(day)
+        ? prev.availability.days.filter((d) => d !== day)
+        : [...prev.availability.days, day],
+    },
+  }));
+};
+
+const handleAvailabilitySubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const babysitterRef = doc(FIREBASE_DB, "babysitters", user.id);
+    await updateDoc(babysitterRef, { availability: formData.availability });
+  } catch (error) {
+    console.error("Error updating availability:", error);
+  }
+};
+
 
 
   if (loading) {
@@ -284,52 +353,142 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
       <Grid container spacing={4}>
         {/* Left Column */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Avatar
-                alt="Babysitter Profile"
-                src={user?.photoURL|| "path/to/default/photo.jpg"}
-                sx={{ width: 120, height: 120, mx: "auto", mb: 2 }}
-              />
-              <Typography variant="h5" gutterBottom>
-              {user?.name || "Parent Name"}
-              </Typography>
-              <Typography variant="body1" color="textSecondary">
-                Email: {email}
-              </Typography>
-            </Box>
-            <Box sx={{ mt: 3 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={() => navigate(`/babysitter-settings/${email}`)}
-              >
-                Edit Profile
-              </Button>
-            </Box>
-          </Paper>
-          <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Active Chats
-          </Typography>
-          {chats.length > 0 ? (
-            chats.map((chat) => (
-              <Button
-                key={chat.id}
-                fullWidth
-                variant="outlined"
-                sx={{ mt: 1 }}
-                onClick={() => navigate(`/chat/${chat.id}`, { state: { userEmail: email } })}
-              >
-                Chat with {chat.participants.find((participant) => participant !== email)}
-              </Button>
-            ))
-          ) : (
-            <Typography>No active chats.</Typography>
-          )}
+  <Paper elevation={3} sx={{ p: 3 }}>
+    <Box sx={{ textAlign: "center" }}>
+      <Avatar
+        alt="Babysitter Profile"
+        src={user?.photoURL || "path/to/default/photo.jpg"}
+        sx={{ width: 120, height: 120, mx: "auto", mb: 2 }}
+      />
+      <Typography variant="h5" gutterBottom>
+        {user?.name || "Babysitter Name"}
+      </Typography>
+      <Typography variant="body1" color="textSecondary">
+        Email: {email}
+      </Typography>
+    </Box>
+
+    {/* Διαθεσιμότητα */}
+    <Box sx={{ mt: 3 }}>
+  <Typography variant="h6" gutterBottom>
+    Availability
+  </Typography>
+  <form onSubmit={handleAvailabilitySubmit}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Days & Hours
+    </Typography>
+    <Box sx={{ display: "flex", gap: 1, justifyContent: "center", mb: 2 }}>
+      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+        <Box
+          key={day}
+          onClick={() => handleDaySelection(day)}
+          sx={{
+            width: 40,
+            height: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "50%",
+            border: "2px solid #f3b2ac",
+            backgroundColor: formData.availability.days.includes(day) ? "#f3b2ac" : "transparent",
+            color: formData.availability.days.includes(day) ? "#fff" : "#4c3b34",
+            cursor: "pointer",
+            fontWeight: "bold",
+            userSelect: "none",
+          }}
+        >
+          {day.substring(0, 3).toUpperCase()}
         </Box>
-        </Grid>
+      ))}
+    </Box>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Preferred Hours
+    </Typography>
+    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <TextField
+        label="Start Time"
+        name="start"
+        type="time"
+        value={formData.availability.preferredHours.start}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            availability: {
+              ...prev.availability,
+              preferredHours: { ...prev.availability.preferredHours, start: e.target.value },
+            },
+          }))
+        }
+        InputLabelProps={{ shrink: true }}
+        fullWidth
+      />
+      <TextField
+        label="End Time"
+        name="end"
+        type="time"
+        value={formData.availability.preferredHours.end}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            availability: {
+              ...prev.availability,
+              preferredHours: { ...prev.availability.preferredHours, end: e.target.value },
+            },
+          }))
+        }
+        InputLabelProps={{ shrink: true }}
+        fullWidth
+      />
+    </Box>
+    <FormControlLabel
+      control={
+        <Checkbox
+          checked={formData.availability.isFlexibleWithHours}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              availability: {
+                ...prev.availability,
+                isFlexibleWithHours: e.target.checked,
+              },
+            }))
+          }
+        />
+      }
+      label="Flexible Hours"
+      sx={{ mb: 2 }}
+    />
+    <Button variant="contained" type="submit" color="primary">
+      Save Availability
+    </Button>
+  </form>
+</Box>
+
+
+    {/* Ενεργά Chats */}
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h6" gutterBottom>
+        Active Chats
+      </Typography>
+      {chats.length > 0 ? (
+        chats.map((chat) => (
+          <Button
+            key={chat.id}
+            fullWidth
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={() => navigate(`/chat/${chat.id}`, { state: { userEmail: email } })}
+          >
+            Chat with {chat.participants.find((participant) => participant !== email)}
+          </Button>
+        ))
+      ) : (
+        <Typography>No active chats.</Typography>
+      )}
+    </Box>
+  </Paper>
+</Grid>
+
 
         <Grid item xs={12} md={8}>
                   {/* Τρέχουσα Εργασία */}
@@ -353,10 +512,10 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                     />
                     {/* Πληροφορίες */}
                     <Box sx={{ flex: 1, textAlign: "left" }}>
-                      <Typography variant="body1">
-                        <strong>Babysitter:</strong> {currentJob.babysitterDetails.firstName}{" "}
-                        {currentJob.babysitterDetails.lastName}
-                      </Typography>
+                    <Typography variant="body1">
+                      <strong>Parent Name:</strong> {currentJob.userDetails.firstName}{" "}
+                      {currentJob.userDetails.lastName}
+                    </Typography>
                       <Typography variant="body1">
                         <strong>Start Date:</strong> {new Date(currentJob.startDate).toLocaleDateString()}
                       </Typography>
@@ -387,13 +546,13 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
           {/* All Requests */}
           <Grid item xs={12} sx={{ mt: 4 }}>
   <Typography variant="h6" sx={{ mb: 2 }}>
-    All Requests
+    All Babysitter Requests
   </Typography>
   {allRequests.length > 0 ? (
     allRequests.map((request) => (
       <Card key={request.id} sx={{ mb: 4, p: 2 }}>
         <CardContent sx={{ display: "flex", alignItems: "flex-start" }}>
-          {/* Φωτογραφία */}
+          {/* Φωτογραφία */} 
           <Box
             sx={{
               width: 80,
@@ -416,14 +575,11 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
           {/* Πληροφορίες */}
           <Box sx={{ flex: 1 }}>
             <Typography variant="body1">
-              <strong>Request ID:</strong> {request.id}
-            </Typography>
-            <Typography variant="body1">
               <strong>Status:</strong> {request.state}
             </Typography>
             <Typography variant="body1">
-              <strong>Babysitter Name:</strong> {request.babysitterDetails.firstName}{" "}
-              {request.babysitterDetails.lastName}
+              <strong>Parent Name:</strong> {request.userDetails.firstName}{" "}
+              {request.userDetails.lastName}
             </Typography>
             <Typography variant="body1">
               <strong>Start Date:</strong>{" "}
@@ -476,8 +632,8 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                 color="primary"
                 onClick={() =>
                   handleViewChat(
-                    request.userDetails.email,
-                    request.babysitterDetails.email
+                    request.babysitterDetails.email,
+                    request.userDetails.email
                   )
                 }
               >
@@ -489,9 +645,10 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
       </Card>
     ))
   ) : (
-    <Typography>No requests found.</Typography>
+    <Typography>No babysitter requests found.</Typography>
   )}
 </Grid>
+
 
         
 {/* History Section */}
@@ -526,9 +683,10 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
 
             {/* Πληροφορίες */}
             <Box sx={{ flex: 1 }}>
-              <Typography variant="body1">
-                <strong>Parent Name:</strong> {request.parentName}
-              </Typography>
+            <Typography variant="body1">
+                      <strong>Parent Name:</strong> {currentJob.userDetails.firstName}{" "}
+                      {currentJob.userDetails.lastName}
+                    </Typography>
               <Typography variant="body1">
                 <strong>Start Date:</strong>{" "}
                 {new Date(request.startDate).toLocaleDateString()}

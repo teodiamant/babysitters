@@ -94,7 +94,7 @@ const MakeContract = () => {
         try {
             const contractData = {
                 state: 'Pending',
-                payment:'false',
+                payment:'Pending',
                 startDate: formData.startDate,
                 duration: formData.duration,
                 city: formData.city,

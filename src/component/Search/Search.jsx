@@ -40,28 +40,43 @@ const BabysitterProfile = ({ babysitter }) => {
 
   return (
     <Paper
-      elevation={3}
-      sx={{ display: 'flex', padding: 2, marginBottom: 2, borderRadius: '10px', cursor: 'pointer' }}
-      onClick={handleClick}
-    >
-      <img
-        src={babysitter.profilePicture || 'default_image.jpg'}
-        alt="Babysitter"
-        style={{ width: 80, height: 80, borderRadius: '50%', marginRight: 16 }}
-      />
-      <Box>
-        <Typography variant="h6">{`${babysitter.firstName} ${babysitter.lastName}`}</Typography>
-        <Typography variant="body2">Age: {calculateAge(babysitter.birthDate)}</Typography>
-        <Typography variant="body2">Experience: {babysitter.experience} years</Typography>
-        <Typography variant="body2">Location: {babysitter.location}</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-          <Rating value={babysitter.rating?.average || 0} precision={0.5} readOnly />
-          <Typography variant="body2" sx={{ ml: 1 }}>
-            ({babysitter.rating?.count || 0} reviews)
-          </Typography>
-        </Box>
-      </Box>
-    </Paper>
+  elevation={3}
+  sx={{
+    display: 'flex',
+    padding: 2,
+    marginBottom: 2,
+    borderRadius: '10px',
+    cursor: 'pointer',
+    alignItems: 'center',
+  }}
+  onClick={handleClick}
+>
+  <img
+    src={babysitter.profilePicture || 'default_image.jpg'}
+    alt="Babysitter"
+    style={{
+      width: 100,
+      height: 100,
+      borderRadius: '50%',
+      marginRight: 16,
+      flexShrink: 0,
+    }}
+  />
+  <Box sx={{ flex: 1, textAlign: 'center' }}>
+    <Typography variant="h6">{`${babysitter.firstName} ${babysitter.lastName}`}</Typography>
+    <Typography variant="body2">Age: {calculateAge(babysitter.birthDate)}</Typography>
+    <Typography variant="body2">Experience: {babysitter.experience} years</Typography>
+    <Typography variant="body2">Location: {babysitter.location}</Typography>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
+      <Rating value={babysitter.rating?.average || 0} precision={0.5} readOnly />
+      <Typography variant="body2" sx={{ ml: 1 }}>
+        ({babysitter.rating?.count || 0} reviews)
+      </Typography>
+    </Box>
+  </Box>
+</Paper>
+
+
   );
 };
 
