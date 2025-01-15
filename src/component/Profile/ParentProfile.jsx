@@ -272,7 +272,11 @@ const handleCloseDetails = () => {
 useEffect(() => {
   const fetchPastJobsWithRatings = async () => {
     try {
-      const jobsQuery = collection(FIREBASE_DB, "requests");
+      // Query μόνο για τις δουλειές που σχετίζονται με τον τρέχοντα γονέα
+      const jobsQuery = query(
+        collection(FIREBASE_DB, "requests"),
+        where("userDetails.email", "==", user?.email) // Φιλτράρισμα βάσει του email του τρέχοντος χρήστη
+      );
       const jobsSnapshot = await getDocs(jobsQuery);
 
       const jobs = jobsSnapshot.docs.map((doc) => ({
@@ -280,6 +284,7 @@ useEffect(() => {
         ...doc.data(),
       }));
 
+      // Φιλτράρισμα για δουλειές που έχουν ολοκληρωθεί
       const completedJobs = jobs.filter((job) => {
         if (job.state === "Accepted") {
           const startDate = new Date(job.startDate);
@@ -287,36 +292,49 @@ useEffect(() => {
           const endDate = new Date(startDate);
           endDate.setMonth(startDate.getMonth() + durationInMonths);
 
-          return endDate < new Date(); // Επιστρέφει true μόνο αν η δουλειά έχει τελειώσει
+          return endDate < new Date(); // Επιστρέφει true μόνο αν η δουλειά έχει ολοκληρωθεί
         }
         return false;
       });
 
-      for (const job of completedJobs) {
-        const ratingsQuery = query(
-          collection(FIREBASE_DB, "ratings"),
-          where("jobId", "==", job.id)
-        );
-        const ratingsSnapshot = await getDocs(ratingsQuery);
+      // Συνδυασμός των ολοκληρωμένων δουλειών με τις αξιολογήσεις
+      const jobsWithRatings = await Promise.all(
+        completedJobs.map(async (job) => {
+          const ratingsQuery = query(
+            collection(FIREBASE_DB, "ratings"),
+            where("jobId", "==", job.id),
+            where("parentDetails.email", "==", user?.email) // Επιβεβαίωση ότι η αξιολόγηση ανήκει στον τρέχοντα γονέα
+          );
+          const ratingsSnapshot = await getDocs(ratingsQuery);
 
-        if (!ratingsSnapshot.empty) {
-          const ratingData = ratingsSnapshot.docs[0].data();
-          job.rating = ratingData.rating || 0;
-          job.comment = ratingData.comment || "";
-        } else {
-          job.rating = null;
-          job.comment = null;
-        }
-      }
+          if (!ratingsSnapshot.empty) {
+            const ratingData = ratingsSnapshot.docs[0].data();
+            return {
+              ...job,
+              rating: ratingData.rating || 0,
+              comment: ratingData.comment || "",
+            };
+          }
 
-      setPastJobs(completedJobs);
+          return {
+            ...job,
+            rating: null,
+            comment: null,
+          };
+        })
+      );
+
+      setPastJobs(jobsWithRatings);
     } catch (error) {
       console.error("Error fetching past jobs with ratings:", error);
     }
   };
 
-  fetchPastJobsWithRatings();
-}, []);
+  if (user?.email) {
+    fetchPastJobsWithRatings();
+  }
+}, [user?.email]);
+
 
 
 const handleViewChat = async (parentEmail, babysitterEmail) => {
