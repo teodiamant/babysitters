@@ -139,10 +139,11 @@ const ParentProfile = () => {
               const durationInMonths = parseInt(request.duration || "0", 10);
               const endDate = new Date(startDate);
               endDate.setMonth(startDate.getMonth() + durationInMonths);
-              return endDate < new Date();
+              return endDate < new Date(); // Επιστρέφει true μόνο για ολοκληρωμένες εργασίες
             }
             return false;
           });
+          
           setPastJobs(completedJobs);
         } else {
           setRequests([]);
@@ -267,6 +268,56 @@ const handleOpenDetails = (request) => {
 const handleCloseDetails = () => {
   setSelectedRequest(null);
 };  
+
+useEffect(() => {
+  const fetchPastJobsWithRatings = async () => {
+    try {
+      const jobsQuery = collection(FIREBASE_DB, "requests");
+      const jobsSnapshot = await getDocs(jobsQuery);
+
+      const jobs = jobsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const completedJobs = jobs.filter((job) => {
+        if (job.state === "Accepted") {
+          const startDate = new Date(job.startDate);
+          const durationInMonths = parseInt(job.duration || "0", 10);
+          const endDate = new Date(startDate);
+          endDate.setMonth(startDate.getMonth() + durationInMonths);
+
+          return endDate < new Date(); // Επιστρέφει true μόνο αν η δουλειά έχει τελειώσει
+        }
+        return false;
+      });
+
+      for (const job of completedJobs) {
+        const ratingsQuery = query(
+          collection(FIREBASE_DB, "ratings"),
+          where("jobId", "==", job.id)
+        );
+        const ratingsSnapshot = await getDocs(ratingsQuery);
+
+        if (!ratingsSnapshot.empty) {
+          const ratingData = ratingsSnapshot.docs[0].data();
+          job.rating = ratingData.rating || 0;
+          job.comment = ratingData.comment || "";
+        } else {
+          job.rating = null;
+          job.comment = null;
+        }
+      }
+
+      setPastJobs(completedJobs);
+    } catch (error) {
+      console.error("Error fetching past jobs with ratings:", error);
+    }
+  };
+
+  fetchPastJobsWithRatings();
+}, []);
+
 
 const handleViewChat = async (parentEmail, babysitterEmail) => {
   try {
@@ -553,25 +604,17 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
 
           {/* Πληροφορίες */}
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body1">
-              <strong>Babysitter Name:</strong> {job.babysitterDetails.firstName}{" "}
-              {job.babysitterDetails.lastName}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Start Date:</strong>{" "}
-              {new Date(job.startDate).toLocaleDateString()}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Duration:</strong> {job.duration} months
-            </Typography>
-            <Button
-              variant="outlined"
-              sx={{ mt: 2 }}
-              onClick={() => handleOpenDetails(job)}
-            >
-              View Details
-            </Button>
-          </Box>
+          <Typography variant="body1">
+            <strong>Babysitter Name:</strong> {job.babysitterDetails.firstName}{" "}
+            {job.babysitterDetails.lastName}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Start Date:</strong> {new Date(job.startDate).toLocaleDateString()}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Duration:</strong> {job.duration} months
+          </Typography>
+        </Box>
         </CardContent>
 
         {/* Βαθμολογία */}

@@ -132,12 +132,19 @@ const BabysitterProfile = () => {
           setCurrentJob(activeJob || null);
 
           // Get history requests
-          const history = requests.filter(
-            (request) =>
-              request.state === "Accepted" &&
-              new Date(request.startDate) < new Date()
-          );
+          const history = requests.filter((request) => {
+            if (request.state === "Accepted") {
+              const startDate = new Date(request.startDate);
+              const durationInMonths = parseInt(request.duration || "0", 10);
+              const endDate = new Date(startDate);
+              endDate.setMonth(startDate.getMonth() + durationInMonths);
+          
+              return endDate < new Date(); // Μόνο αν έχει ολοκληρωθεί
+            }
+            return false;
+          });
           setHistoryRequests(history);
+          
         } else {
           setAllRequests([]);
           setCurrentJob(null);
@@ -166,6 +173,41 @@ const BabysitterProfile = () => {
         fetchChats();
     fetchRequests();
   }, [email]);
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const ratingsQuery = query(
+          collection(FIREBASE_DB, "ratings"),
+          where("babysitterDetails.email", "==", email)
+        );
+        const ratingsSnap = await getDocs(ratingsQuery);
+  
+        if (!ratingsSnap.empty) {
+          const ratings = ratingsSnap.docs.map((doc) => doc.data());
+  
+          // Συνδυασμός κριτικών με το ιστορικό
+          const updatedHistory = historyRequests.map((request) => {
+            const rating = ratings.find((rate) => rate.jobId === request.id);
+            return {
+              ...request,
+              rating: rating?.rating || null,
+              comment: rating?.comment || null,
+            };
+          });
+  
+          setHistoryRequests(updatedHistory);
+        }
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+      }
+    };
+  
+    if (historyRequests.length > 0) {
+      fetchRatings();
+    }
+  }, [email,historyRequests]);
+  
 
   const handleUpdateRequestState = async (requestId, newState) => {
     try {
@@ -496,33 +538,32 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                 {request.payment === "true" ? "Accepted" : "Rejected"}
               </Typography>
  {/* Κριτικές */}
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Reviews
-          </Typography>
-          {request.length > 0 ? (
-            request.map((request) => (
-              <Paper key={request.id} elevation={2} sx={{ p: 2, mb: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <Rating value={request.rating} precision={0.5} readOnly />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
-                    {request.rating} stars
-                  </Typography>
-                </Box>
-                {request.comment && (
-                  <Typography variant="body2" color="textSecondary">
-                    {request.comment}
-                  </Typography>
-                )}
-                <Typography variant="caption" color="textSecondary">
-                  Submitted by: {request.parentDetails.email}
-                </Typography>
-              </Paper>
-            ))
-          ) : (
-            <Typography>No reviews yet.</Typography>
-          )}
-        </Box>
+ <Box sx={{ mt: 4 }}>
+  <Typography variant="h5" gutterBottom>
+    Reviews
+  </Typography>
+  {request.rating ? (
+    <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+        <Rating value={request.rating} precision={0.5} readOnly />
+        <Typography variant="body2" sx={{ ml: 1 }}>
+          {request.rating} stars
+        </Typography>
+      </Box>
+      {request.comment && (
+        <Typography variant="body2" color="textSecondary">
+          {request.comment}
+        </Typography>
+      )}
+      <Typography variant="caption" color="textSecondary">
+        Submitted by: {request.userDetails.email}
+      </Typography>
+    </Paper>
+  ) : (
+    <Typography>No reviews yet.</Typography>
+  )}
+</Box>
+
 
               <Button
                 variant="outlined"
