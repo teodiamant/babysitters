@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Rating,
 } from "@mui/material";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 
@@ -288,134 +289,258 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
         </Box>
         </Grid>
 
-        {/* Middle Column */}
-        <Grid item xs={12} md={4}>
-          {/* Current Job */}
+        <Grid item xs={12} md={8}>
+                  {/* Τρέχουσα Εργασία */}
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                        Current Job
+                      </Typography>
           <Grid item xs={12}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Current Job
-              </Typography>
-              {currentJob ? (
-                <Typography>
-                  You are currently working for: {currentJob.parentName} <br />
-                  Start Date:{" "}
-                  {new Date(currentJob.startDate).toLocaleDateString()}
-                </Typography>
-              ) : (
-                <Typography>No current job.</Typography>
-              )}
-            </Paper>
-          </Grid>
+                    <Paper elevation={3} sx={{ p: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
+                {currentJob ? (
+                  <>
+                    {/* Φωτογραφία Νταντάς */}
+                    <img
+                      src={currentJob.userDetails.profilePicture || "default_image.jpg"}
+                      alt="Babysitter"
+                      style={{
+                        width: 150, // Μεγαλύτερο πλάτος
+                        height: 150, // Μεγαλύτερο ύψος
+                        borderRadius: "50%", // Κυκλική εμφάνιση
+                        objectFit: "cover",
+                      }}
+                    />
+                    {/* Πληροφορίες */}
+                    <Box sx={{ flex: 1, textAlign: "left" }}>
+                      <Typography variant="body1">
+                        <strong>Babysitter:</strong> {currentJob.babysitterDetails.firstName}{" "}
+                        {currentJob.babysitterDetails.lastName}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Start Date:</strong> {new Date(currentJob.startDate).toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Payment Status:</strong> {currentJob.payment === "true" ? "Accepted" : "Rejected"}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Days:</strong> {currentJob.availability.days.join(", ")}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Hours:</strong> {currentJob.availability.preferredHours.start} -{" "}
+                        {currentJob.availability.preferredHours.end}
+                      </Typography>
+                      <Typography variant="body1">
+                        <strong>Address:</strong> {currentJob.street}, {currentJob.city}, {currentJob.postalCode}
+                      </Typography>
+                      <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleOpenDetails(currentJob)}>
+                        View Details
+                      </Button>
+                    </Box>
+                  </>
+                ) : (
+                  <Typography>No current job.</Typography>
+                )}
+              </Paper>
+                    </Grid>
 
           {/* All Requests */}
           <Grid item xs={12} sx={{ mt: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              All Requests
-            </Typography>
-            {allRequests.length > 0 ? (
-              allRequests.map((request) => (
-                <Card key={request.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="body1">
-                      Request ID: {request.id}
-                    </Typography>
-                    <Typography variant="body1">
-                      Status: {request.state}
-                    </Typography>
-                    <Typography variant="body1">
-                      Parent Name: {request.userDetails.displayName}
-                    </Typography>
-                    <Typography variant="body1">
-                      Start Date:{" "}
-                      {new Date(request.startDate).toLocaleDateString()}
-                    </Typography>
-                    <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-                      {["Pending", "Accepted"].includes(request.state) && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleOpenDetails(request)}
-                        >
-                          View Details
-                        </Button>
-                      )}
-                      {request.state === "Pending" && (
-                        <>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            onClick={() =>
-                              handleUpdateRequestState(request.id, "Accepted")
-                            }
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="error"
-                            onClick={() =>
-                              handleUpdateRequestState(request.id, "Rejected")
-                            }
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() =>
-                        handleViewChat(request.userDetails.email, request.babysitterDetails.email)
-                      }
-                    >
-                      View Chat
-                    </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Typography>No requests found.</Typography>
-            )}
-          </Grid>
-        </Grid>
+  <Typography variant="h6" sx={{ mb: 2 }}>
+    All Requests
+  </Typography>
+  {allRequests.length > 0 ? (
+    allRequests.map((request) => (
+      <Card key={request.id} sx={{ mb: 4, p: 2 }}>
+        <CardContent sx={{ display: "flex", alignItems: "flex-start" }}>
+          {/* Φωτογραφία */}
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              overflow: "hidden",
+              flexShrink: 0,
+              mr: 2,
+            }}
+          >
+            <img
+              src={
+                request.userDetails.profilePicture || "default_babysitter_image.jpg"
+              }
+              alt="Babysitter"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Box>
 
-        {/* Right Column */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              History
+          {/* Πληροφορίες */}
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body1">
+              <strong>Request ID:</strong> {request.id}
             </Typography>
-            {historyRequests.length > 0 ? (
-              historyRequests.map((request) => (
-                <Card key={request.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="body1">
-                      Parent Name: {request.parentName}
-                    </Typography>
-                    <Typography variant="body1">
-                      Start Date:{" "}
-                      {new Date(request.startDate).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body1">
-                      Payment Status:{" "}
-                      {request.payment === "true" ? "Accepted" : "Rejected"}
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleOpenDetails(request)}
-                      sx={{ mt: 1 }}
-                    >
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Typography>No history found.</Typography>
-            )}
-          </Paper>
-        </Grid>
+            <Typography variant="body1">
+              <strong>Status:</strong> {request.state}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Babysitter Name:</strong> {request.babysitterDetails.firstName}{" "}
+              {request.babysitterDetails.lastName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Start Date:</strong>{" "}
+              {new Date(request.startDate).toLocaleDateString()}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Days:</strong> {request.availability.days.join(", ")}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Hours:</strong>{" "}
+              {`${request.availability.preferredHours.start} - ${request.availability.preferredHours.end}`}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Address:</strong> {request.street}, {request.city},{" "}
+              {request.postalCode}
+            </Typography>
+
+            {/* Κουμπιά */}
+            <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => handleOpenDetails(request)}
+              >
+                View Details
+              </Button>
+              {request.state === "Pending" && (
+                <>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() =>
+                      handleUpdateRequestState(request.id, "Accepted")
+                    }
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() =>
+                      handleUpdateRequestState(request.id, "Rejected")
+                    }
+                  >
+                    Reject
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() =>
+                  handleViewChat(
+                    request.userDetails.email,
+                    request.babysitterDetails.email
+                  )
+                }
+              >
+                View Chat
+              </Button>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    ))
+  ) : (
+    <Typography>No requests found.</Typography>
+  )}
+</Grid>
+
+        
+{/* History Section */}
+<Grid item xs={12} sx={{ mt: 4 }}>
+<Typography variant="h6" sx={{ mb: 2 }}>
+      History
+    </Typography>
+  <Paper elevation={3} sx={{ p: 3 }}>
+    {historyRequests.length > 0 ? (
+      historyRequests.map((request) => (
+        <Card key={request.id} sx={{ mb: 2 }}>
+          <CardContent sx={{ display: "flex", alignItems: "flex-start" }}>
+            {/* Φωτογραφία */}
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                overflow: "hidden",
+                flexShrink: 0,
+                mr: 2,
+              }}
+            >
+              <img
+                src={
+                  request.userDetails?.profilePicture || "default_parent_image.jpg"
+                }
+                alt="Parent"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </Box>
+
+            {/* Πληροφορίες */}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body1">
+                <strong>Parent Name:</strong> {request.parentName}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Start Date:</strong>{" "}
+                {new Date(request.startDate).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Payment Status:</strong>{" "}
+                {request.payment === "true" ? "Accepted" : "Rejected"}
+              </Typography>
+ {/* Κριτικές */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            Reviews
+          </Typography>
+          {request.length > 0 ? (
+            request.map((request) => (
+              <Paper key={request.id} elevation={2} sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <Rating value={request.rating} precision={0.5} readOnly />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    {request.rating} stars
+                  </Typography>
+                </Box>
+                {request.comment && (
+                  <Typography variant="body2" color="textSecondary">
+                    {request.comment}
+                  </Typography>
+                )}
+                <Typography variant="caption" color="textSecondary">
+                  Submitted by: {request.parentDetails.email}
+                </Typography>
+              </Paper>
+            ))
+          ) : (
+            <Typography>No reviews yet.</Typography>
+          )}
+        </Box>
+
+              <Button
+                variant="outlined"
+                onClick={() => handleOpenDetails(request)}
+                sx={{ mt: 2 }}
+              >
+                View Details
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      ))
+    ) : (
+      <Typography>No history found.</Typography>
+    )}
+  </Paper>
+</Grid>
+</Grid>
       </Grid>
 
       {/* Dialog for Viewing Details */}

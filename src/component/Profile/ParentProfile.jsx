@@ -372,121 +372,156 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
         {/* Δεξιά Στήλη */}
         <Grid item xs={12} md={8}>
           {/* Τρέχουσα Εργασία */}
-          <Grid item xs={12}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
                 Current Job
               </Typography>
-              {currentJob ? (
-                <>
-                  <Typography>
-                    Babysitter: {currentJob.babysitterDetails.firstName}
-                    <br />
-                    Start Date:{" "}
-                    {new Date(currentJob.startDate).toLocaleDateString()}
-                    <br />
-                    Payment Status:{" "}
-                    {currentJob.payment === "true" ? "Accepted" : "Rejected"}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleOpenDetails(currentJob)}
-                  >
-                    View Details
-                  </Button>
-                </>
-              ) : (
-                <Typography>No current job.</Typography>
-              )}
-            </Paper>
+          <Grid item xs={12}>
+          <Paper elevation={3} sx={{ p: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
+      {currentJob ? (
+        <>
+          {/* Φωτογραφία Νταντάς */}
+          <img
+            src={currentJob.babysitterDetails.profilePicture || "default_image.jpg"}
+            alt="Babysitter"
+            style={{
+              width: 150, // Μεγαλύτερο πλάτος
+              height: 150, // Μεγαλύτερο ύψος
+              borderRadius: "50%", // Κυκλική εμφάνιση
+              objectFit: "cover",
+            }}
+          />
+          {/* Πληροφορίες */}
+          <Box sx={{ flex: 1, textAlign: "left" }}>
+            <Typography variant="body1">
+              <strong>Babysitter:</strong> {currentJob.babysitterDetails.firstName}{" "}
+              {currentJob.babysitterDetails.lastName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Start Date:</strong> {new Date(currentJob.startDate).toLocaleDateString()}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Payment Status:</strong> {currentJob.payment === "true" ? "Accepted" : "Rejected"}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Days:</strong> {currentJob.availability.days.join(", ")}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Hours:</strong> {currentJob.availability.preferredHours.start} -{" "}
+              {currentJob.availability.preferredHours.end}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Address:</strong> {currentJob.street}, {currentJob.city}, {currentJob.postalCode}
+            </Typography>
+            <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleOpenDetails(currentJob)}>
+              View Details
+            </Button>
+          </Box>
+        </>
+      ) : (
+        <Typography>No current job.</Typography>
+      )}
+    </Paper>
           </Grid>
           {/* Όλα τα Αιτήματα */}
-          <Grid item xs={12} sx={{ mt: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Your Requests
+<Grid item xs={12} sx={{ mt: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>
+    Your Requests
+  </Typography>
+  {requests.length > 0 ? (
+    requests.map((request) => (
+      <Card key={request.id} sx={{ mb: 2 }}>
+        <CardContent sx={{ display: "flex", alignItems: "center", gap: 3, flexDirection: { xs: "column", md: "row" }, }}>
+          {/* Φωτογραφία Νταντάς */}
+          <img
+            src={request.babysitterDetails.profilePicture || "default_image.jpg"}
+            alt="Babysitter"
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
+          />
+          {/* Πληροφορίες */}
+          <Box sx={{ flex: 1, textAlign: "left" }}>
+            <Typography variant="body1">
+              <strong>Request ID:</strong> {request.id}
             </Typography>
-            {requests.length > 0 ? (
-              requests.map((request) => (
-                <Card key={request.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="body1">
-                      Request ID: {request.id}
-                    </Typography>
-                    <Typography variant="body1">
-                      Status: {request.state}
-                    </Typography>
-                    <Typography variant="body1">
-                      Babysitter Name: {request.babysitterDetails.firstName}
-                    </Typography>
-                    <Typography variant="body1">
-                      Start Date:{" "}
-                      {new Date(request.startDate).toLocaleDateString()}
-                    </Typography>
-                    <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => handleOpenDetails(request)}
-                      >
-                        View Details
-                      </Button>
-                      {request.state === "Pending" && (
-                        <Button
-                          variant="contained"
-                          color="error"
-                          onClick={() => handleDeleteRequest(request.id)}
-                        >
-                          Delete
-                        </Button>
-                      )}
-                      <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() =>
-                        handleViewChat(request.userDetails.email, request.babysitterDetails.email)
-                      }
-                    >
-                      View Chat
-                    </Button>
-                    </Box>
-                    
-                    {request.state === "Accepted" && (
-                      <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-                        <Button
-                          variant={
-                            request.payment === "true"
-                              ? "contained"
-                              : "outlined"
-                          }
-                          color="success"
-                          onClick={() =>
-                            handleTogglePayment(request.id, "true")
-                          }
-                        >
-                          Accepted
-                        </Button>
-                        <Button
-                          variant={
-                            request.payment === "false"
-                              ? "contained"
-                              : "outlined"
-                          }
-                          color="error"
-                          onClick={() =>
-                            handleTogglePayment(request.id, "false")
-                          }
-                        >
-                          Rejected
-                        </Button>
-                      </Box>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Typography>No requests found.</Typography>
+            <Typography variant="body1">
+              <strong>Status:</strong> {request.state}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Babysitter Name:</strong> {request.babysitterDetails.firstName}{" "}
+              {request.babysitterDetails.lastName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Start Date:</strong> {new Date(request.startDate).toLocaleDateString()}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Days:</strong> {request.availability.days.join(", ")}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Hours:</strong> {request.availability.preferredHours.start} -{" "}
+              {request.availability.preferredHours.end}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Address:</strong> {request.street}, {request.city}, {request.postalCode}
+            </Typography>
+          </Box>
+        </CardContent>
+        <CardContent>
+        <Box sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}>
+            <Button variant="outlined" onClick={() => handleOpenDetails(request)}>
+              View Details
+            </Button>
+            {request.state === "Pending" && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => handleDeleteRequest(request.id)}
+              >
+                Delete
+              </Button>
             )}
-          </Grid>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() =>
+                handleViewChat(
+                  request.userDetails.email,
+                  request.babysitterDetails.email
+                )
+              }
+            >
+              View Chat
+            </Button>
+            {request.state === "Accepted" && (
+              <>
+                <Button
+                  variant={request.payment === "true" ? "contained" : "outlined"}
+                  color="success"
+                  onClick={() => handleTogglePayment(request.id, "true")}
+                >
+                  Accepted
+                </Button>
+                <Button
+                  variant={request.payment === "false" ? "contained" : "outlined"}
+                  color="error"
+                  onClick={() => handleTogglePayment(request.id, "false")}
+                >
+                  Rejected
+                </Button>
+              </>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    ))
+  ) : (
+    <Typography>No requests found.</Typography>
+  )}
+</Grid>
+
 
           {/* Ιστορικό Συνεργασιών */}
           <Grid item xs={12} sx={{ mt: 4 }}>
@@ -495,49 +530,82 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
   </Typography>
   {pastJobs.length > 0 ? (
     pastJobs.map((job) => (
-      <Card key={job.id} sx={{ mb: 2 }}>
+      <Card key={job.id} sx={{ mb: 4, p: 2 }}>
+        <CardContent
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            flexDirection: { xs: "column", md: "row" },
+          }}
+        >
+          {/* Φωτογραφία Νταντάς */}
+          <img
+            src={job.babysitterDetails.profilePicture || "default_image.jpg"}
+            alt="Babysitter"
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
+          />
+
+          {/* Πληροφορίες */}
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body1">
+              <strong>Babysitter Name:</strong> {job.babysitterDetails.firstName}{" "}
+              {job.babysitterDetails.lastName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Start Date:</strong>{" "}
+              {new Date(job.startDate).toLocaleDateString()}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Duration:</strong> {job.duration} months
+            </Typography>
+            <Button
+              variant="outlined"
+              sx={{ mt: 2 }}
+              onClick={() => handleOpenDetails(job)}
+            >
+              View Details
+            </Button>
+          </Box>
+        </CardContent>
+
+        {/* Βαθμολογία */}
         <CardContent>
-          <Typography variant="body1">
-            Babysitter Name: {job.babysitterDetails.firstName}
-          </Typography>
-          <Typography variant="body1">
-            Start Date: {new Date(job.startDate).toLocaleDateString()}
-          </Typography>
-          <Typography variant="body1">
-            Duration: {job.duration} months
-          </Typography>
-          <Button
-            variant="outlined"
-            sx={{ mt: 2 }}
-            onClick={() => handleOpenDetails(job)}
-          >
-            View Details
-          </Button>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body1">
-              {job.rating ? "Your Rating:" : "Rate this job:"}
+              {job.rating ? "Your Rating:" : "Add Rating:"}
             </Typography>
             {job.rating && !job.isEditing ? (
               <>
                 <Rating value={job.rating} readOnly precision={0.5} />
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                   {job.comment || "No comment provided"}
                 </Typography>
-                <Button
-                  variant="outlined"
-                  sx={{ mt: 2 }}
-                  onClick={() => {
-                    // Allow editing
-                    job.isEditing = true;
-                    setPastJobs((prev) =>
-                      prev.map((prevJob) =>
-                        prevJob.id === job.id ? { ...prevJob, isEditing: true } : prevJob
-                      )
-                    );
-                  }}
-                >
-                  Edit Review
-                </Button>
+                <Typography variant="caption" color="textSecondary">
+                  Submitted by: {job.babysitterDetails.email}
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      job.isEditing = true;
+                      setPastJobs((prev) =>
+                        prev.map((prevJob) =>
+                          prevJob.id === job.id
+                            ? { ...prevJob, isEditing: true }
+                            : prevJob
+                        )
+                      );
+                    }}
+                  >
+                    Edit Rating
+                  </Button>
+                </Box>
               </>
             ) : (
               <>
@@ -574,16 +642,45 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                     );
                   }}
                 />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 2 }}
-                  onClick={() =>
-                    handleRatingSubmit(job, job.tempRating, job.tempComment)
-                  }
-                >
-                  {job.rating ? "Update Rating" : "Submit Rating"}
-                </Button>
+                <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => {
+                      handleRatingSubmit(job, job.tempRating, job.tempComment);
+                      job.isEditing = false;
+                      setPastJobs((prev) =>
+                        prev.map((prevJob) =>
+                          prevJob.id === job.id
+                            ? {
+                                ...prevJob,
+                                rating: job.tempRating,
+                                comment: job.tempComment,
+                                isEditing: false,
+                              }
+                            : prevJob
+                        )
+                      );
+                    }}
+                  >
+                    Save Rating
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      job.isEditing = false;
+                      setPastJobs((prev) =>
+                        prev.map((prevJob) =>
+                          prevJob.id === job.id
+                            ? { ...prevJob, isEditing: false }
+                            : prevJob
+                        )
+                      );
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
               </>
             )}
           </Box>
@@ -593,7 +690,9 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
   ) : (
     <Typography>No past jobs found.</Typography>
   )}
-          </Grid>
+</Grid>
+
+
         </Grid>
       </Grid>
        {/* Dialog for Viewing Details */}
