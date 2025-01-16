@@ -77,6 +77,56 @@ const BabysitterDetails = () => {
     }
     return age;
   };
+  
+  const fetchUserDetailsForChat = async (parentEmail, babysitterEmail) => {
+    try {
+      // Query για τον γονέα
+      const parentQuery = query(
+        collection(FIREBASE_DB, "parents"),
+        where("email", "==", parentEmail)
+      );
+      const parentSnapshot = await getDocs(parentQuery);
+  
+      // Query για τη νταντά
+      const babysitterQuery = query(
+        collection(FIREBASE_DB, "babysitters"),
+        where("email", "==", babysitterEmail)
+      );
+      const babysitterSnapshot = await getDocs(babysitterQuery);
+  
+      const userDetails = {};
+  
+      // Εξαγωγή δεδομένων για τον γονέα
+      if (!parentSnapshot.empty) {
+        const parentData = parentSnapshot.docs[0].data();
+        userDetails[parentEmail] = {
+          name: `${parentData.firstName} ${parentData.lastName}` || "Anonymous",
+          photoURL: parentData.profilePicture || "default_image.jpg",
+          email: parentEmail,
+        };
+      } else {
+        console.warn(`No data found for parent with email: ${parentEmail}`);
+      }
+  
+      // Εξαγωγή δεδομένων για τη νταντά
+      if (!babysitterSnapshot.empty) {
+        const babysitterData = babysitterSnapshot.docs[0].data();
+        userDetails[babysitterEmail] = {
+          name: `${babysitterData.firstName} ${babysitterData.lastName}` || "Anonymous",
+          photoURL: babysitterData.profilePicture || "default_image.jpg",
+          email: babysitterEmail,
+        };
+      } else {
+        console.warn(`No data found for babysitter with email: ${babysitterEmail}`);
+      }
+  
+      return userDetails;
+    } catch (error) {
+      console.error("Error fetching user details for chat:", error);
+      return null;
+    }
+  };
+  
 
   const handleViewChat = async () => {
     try {
@@ -87,34 +137,20 @@ const BabysitterDetails = () => {
         return;
       }
   
-      // Εύρεση υπάρχουσας συνομιλίας
-      const chatsQuery = query(
-        collection(FIREBASE_DB, "chats"),
-        where("participants", "array-contains", user.email)
-      );
-      const chatsSnap = await getDocs(chatsQuery);
+      const userDetails = await fetchUserDetailsForChat(user.email, babysitter.email);
   
-      let existingChat = null;
-  
-      chatsSnap.forEach((doc) => {
-        const data = doc.data();
-        if (
-          data.participants.includes(user.email) &&
-          data.participants.includes(babysitter.email)
-        ) {
-          existingChat = { id: doc.id, ...data };
-        }
-      });
-  
-      if (existingChat) {
-        // Αν υπάρχει ήδη η συνομιλία
-        navigate(`/chat/${existingChat.id}`, { state: { userEmail: user.email } });
+      if (!userDetails) {
+        alert("Failed to fetch user details. Please try again.");
         return;
       }
   
-      // Δημιουργία νέας συνομιλίας με μόνο τα emails
+      // Δημιουργία νέας συνομιλίας με τα πλήρη στοιχεία
       const newChatRef = await addDoc(collection(FIREBASE_DB, "chats"), {
-        participants: [user.email, babysitter.email], // Μόνο τα emails
+        participants: [user.email, babysitter.email],
+        users: {
+          parent: userDetails[user.email],
+          babysitter: userDetails[babysitter.email],
+        },
         createdAt: serverTimestamp(),
       });
   
@@ -124,6 +160,8 @@ const BabysitterDetails = () => {
       alert("Failed to start chat. Please try again.");
     }
   };
+  
+  
   
   const handleMakeContract = () => {
     const user = auth.currentUser;

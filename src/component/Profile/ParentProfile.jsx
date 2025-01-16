@@ -341,6 +341,55 @@ useEffect(() => {
 
 
 
+const fetchUserDetailsForChat = async (parentEmail, babysitterEmail) => {
+  try {
+    // Query για τον γονέα
+    const parentQuery = query(
+      collection(FIREBASE_DB, "parents"),
+      where("email", "==", parentEmail)
+    );
+    const parentSnapshot = await getDocs(parentQuery);
+
+    // Query για τη νταντά
+    const babysitterQuery = query(
+      collection(FIREBASE_DB, "babysitters"),
+      where("email", "==", babysitterEmail)
+    );
+    const babysitterSnapshot = await getDocs(babysitterQuery);
+
+    const userDetails = {};
+
+    // Εξαγωγή δεδομένων για τον γονέα
+    if (!parentSnapshot.empty) {
+      const parentData = parentSnapshot.docs[0].data();
+      userDetails[parentEmail] = {
+        name: `${parentData.firstName} ${parentData.lastName}` || "Anonymous",
+        photoURL: parentData.profilePicture || "default_image.jpg",
+        email: parentEmail,
+      };
+    } else {
+      console.warn(`No data found for parent with email: ${parentEmail}`);
+    }
+
+    // Εξαγωγή δεδομένων για τη νταντά
+    if (!babysitterSnapshot.empty) {
+      const babysitterData = babysitterSnapshot.docs[0].data();
+      userDetails[babysitterEmail] = {
+        name: `${babysitterData.firstName} ${babysitterData.lastName}` || "Anonymous",
+        photoURL: babysitterData.profilePicture || "default_image.jpg",
+        email: babysitterEmail,
+      };
+    } else {
+      console.warn(`No data found for babysitter with email: ${babysitterEmail}`);
+    }
+
+    return userDetails;
+  } catch (error) {
+    console.error("Error fetching user details for chat:", error);
+    return null;
+  }
+};
+
 const handleViewChat = async (parentEmail, babysitterEmail) => {
   try {
     // Εύρεση υπάρχοντος chat
@@ -355,26 +404,38 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     chatsSnap.forEach((doc) => {
       const data = doc.data();
       if (data.participants.includes(babysitterEmail)) {
-        existingChat = { id:doc.id, ...data };
+        existingChat = { id: doc.id, ...data };
       }
     });
 
-    // Αν υπάρχει ήδη το chat, κάνε navigate σε αυτό
+    // Αν υπάρχει ήδη το chat
     if (existingChat) {
       navigate(`/chat/${existingChat.id}`, { state: { userEmail: parentEmail } });
       return;
     }
 
-    // Αν δεν υπάρχει, δημιούργησε νέο chat
+    // Αν δεν υπάρχει, ανακτήστε τα στοιχεία των χρηστών
+    const userDetails = await fetchUserDetailsForChat(parentEmail, babysitterEmail);
+
+    if (!userDetails) {
+      alert("Failed to fetch user details. Please try again.");
+      return;
+    }
+
+    // Δημιουργία νέας συνομιλίας με τα πλήρη στοιχεία
     const newChatRef = await addDoc(collection(FIREBASE_DB, "chats"), {
-      participants: [parentEmail, babysitterEmail], // Emails και των δύο χρηστών
+      participants: [parentEmail, babysitterEmail],
+      users: {
+        parent: userDetails[parentEmail],
+        babysitter: userDetails[babysitterEmail],
+      },
       createdAt: serverTimestamp(),
     });
 
     // Μεταφορά στο νέο chat
     navigate(`/chat/${newChatRef.id}`, { state: { userEmail: parentEmail } });
   } catch (error) {
-    console.error("Error handling chat:", error);
+    console.error("Error starting chat:", error);
   }
 };
 
@@ -418,25 +479,49 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
             </Box>
           </Paper>
           <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Active Chats
+  <Typography variant="h6" gutterBottom>
+    Active Chats
+  </Typography>
+  {chats.length > 0 ? (
+    chats.map((chat) => {
+      // Καθορισμός του παραλήπτη
+      const recipient =
+        chat.users.parent.email === email
+          ? chat.users.babysitter
+          : chat.users.parent;
+
+      return (
+        <Button
+          key={chat.id}
+          fullWidth
+          variant="outlined"
+          sx={{
+            mt: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            gap: 2,
+          }}
+          onClick={() => navigate(`/chat/${chat.id}`, { state: { userEmail: email } })}
+        >
+          {/* Φωτογραφία του παραλήπτη */}
+          <Avatar
+            src={recipient.photoURL || "default_image.jpg"}
+            alt={recipient.name || "Chat Partner"}
+            sx={{ width: 40, height: 40 }}
+          />
+          {/* Όνομα του παραλήπτη */}
+          <Typography variant="body1">
+            {recipient.name || "Chat Partner"}
           </Typography>
-          {chats.length > 0 ? (
-            chats.map((chat) => (
-              <Button
-                key={chat.id}
-                fullWidth
-                variant="outlined"
-                sx={{ mt: 1 }}
-                      onClick={() => navigate(`/chat/${chat.id}`, { state: { userEmail: email } })}
-                    >
-                      Chat with {chat.participants.find((participant) => participant !== email)}
-                    </Button>
-                  ))
-                ) : (
-                  <Typography>No active chats.</Typography>
-                )}
-              </Box>
+        </Button>
+      );
+    })
+  ) : (
+    <Typography>No active chats.</Typography>
+  )}
+</Box>
+
         </Grid>
 
         {/* Δεξιά Στήλη */}
