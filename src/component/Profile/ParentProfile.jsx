@@ -428,17 +428,15 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                 fullWidth
                 variant="outlined"
                 sx={{ mt: 1 }}
-                onClick={() =>
-                  navigate(`/chat/${chat.id}`, { state: { userEmail: email } })
-                }
-              >
-                Chat with {chat.participants.find((participant) => participant !== email)}
-              </Button>
-            ))
-          ) : (
-            <Typography>No active chats.</Typography>
-          )}
-        </Box>
+                      onClick={() => navigate(`/chat/${chat.id}`, { state: { userEmail: email } })}
+                    >
+                      Chat with {chat.participants.find((participant) => participant !== email)}
+                    </Button>
+                  ))
+                ) : (
+                  <Typography>No active chats.</Typography>
+                )}
+              </Box>
         </Grid>
 
         {/* Δεξιά Στήλη */}
