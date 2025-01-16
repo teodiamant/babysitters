@@ -469,6 +469,16 @@ const handleAvailabilitySubmit = async (e) => {
       <Typography variant="body1" color="textSecondary">
         Email: {email}
       </Typography>
+      <Box sx={{ mt: 3 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      onClick={() => navigate(`/babysitter-settings/${email}`)}
+                    >
+                      Edit Profile
+                    </Button>
+                  </Box>
     </Box>
 
     {/* Διαθεσιμότητα */}
