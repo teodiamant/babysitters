@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, MenuItem, CircularProgress,
-        Alert, FormControlLabel, Checkbox, Tooltip,} from '@mui/material';
+        Alert, FormControlLabel, Checkbox, Tooltip,Autocomplete} from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
@@ -8,6 +8,39 @@ import { useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
 
 const steps = ['Personal Details', 'Experience & Availability', 'Setup Profile'];
+const municipalitiesOfAttica = [
+    "Αγία Βαρβάρα",
+    "Αγία Παρασκευή",
+    "Άγιοι Ανάργυροι - Καματερό",
+    "Άγιος Δημήτριος",
+    "Αθήνα",
+    "Αιγάλεω",
+    "Αχαρνές",
+    "Βάρη - Βούλα - Βουλιαγμένη",
+    "Βύρωνας",
+    "Γαλάτσι",
+    "Γλυφάδα",
+    "Δάφνη - Υμηττός",
+    "Ελληνικό - Αργυρούπολη",
+    "Ζωγράφου",
+    "Ηλιούπολη",
+    "Ίλιον",
+    "Καλλιθέα",
+    "Κηφισιά",
+    "Μαρούσι",
+    "Μεταμόρφωση",
+    "Μοσχάτο - Ταύρος",
+    "Νέα Ιωνία",
+    "Νέα Σμύρνη",
+    "Νέος Ηράκλειο",
+    "Παπάγου - Χολαργός",
+    "Πειραιάς",
+    "Περιστέρι",
+    "Πετρούπολη",
+    "Φιλοθέη - Ψυχικό",
+    "Χαϊδάρι",
+    "Χαλάνδρι",
+  ];
 
 const BabysitterSignUp = () => {
     const [activeStep, setActiveStep] = useState(0);
@@ -88,7 +121,7 @@ const BabysitterSignUp = () => {
                 birthDate: formData.birthDate,
                 email: formData.email,
                 phoneNumber: formData.phoneNumber,
-                location: formData.location,
+                location: formData.location || [],
                 experience: formData.experience,
                 certifications: formData.certifications,
                 bio: formData.bio,
@@ -223,23 +256,38 @@ const BabysitterSignUp = () => {
                         />
                     </Box>
                     <Box sx={{ mb: 2 }}>
-                        <TextField
-                            label="Preferred work location *"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleInputChange}
-                            fullWidth
-                            InputProps={{
-                                endAdornment: (
-                                    <Tooltip title="Specify the location you would like to work around">
-                                        <InfoOutlinedIcon
-                                            sx={{ color: '#795e53', cursor: 'pointer' }}
-                                        />
-                                    </Tooltip>
-                                ),
-                            }}
-                        />
-                    </Box>
+                    <Autocomplete
+                        multiple
+                        options={municipalitiesOfAttica}
+                        freeSolo
+                        value={formData.location || []} // Παραμένει "location"
+                        onChange={(event, value) => {
+                            setFormData((prev) => ({
+                                ...prev,
+                                location: value || [], // Παραμένει "location"
+                            }));
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Preferred work locations *"
+                                placeholder="Select one or more locations"
+                                fullWidth
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <Tooltip title="Specify the locations you would like to work around">
+                                            <InfoOutlinedIcon
+                                                sx={{ color: '#795e53', cursor: 'pointer' }}
+                                            />
+                                        </Tooltip>
+                                    ),
+                                }}
+                            />
+                        )}
+                    />
+                </Box>
+
                     <TextField
                         label="Email *"
                         name="email"

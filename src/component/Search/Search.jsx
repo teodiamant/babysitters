@@ -15,10 +15,44 @@ import {
   InputLabel,
   FormControl,
   Rating,
+  Autocomplete,
 } from '@mui/material';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
+const municipalitiesOfAttica = [
+  "Αγία Βαρβάρα",
+  "Αγία Παρασκευή",
+  "Άγιοι Ανάργυροι - Καματερό",
+  "Άγιος Δημήτριος",
+  "Αθήνα",
+  "Αιγάλεω",
+  "Αχαρνές",
+  "Βάρη - Βούλα - Βουλιαγμένη",
+  "Βύρωνας",
+  "Γαλάτσι",
+  "Γλυφάδα",
+  "Δάφνη - Υμηττός",
+  "Ελληνικό - Αργυρούπολη",
+  "Ζωγράφου",
+  "Ηλιούπολη",
+  "Ίλιον",
+  "Καλλιθέα",
+  "Κηφισιά",
+  "Μαρούσι",
+  "Μεταμόρφωση",
+  "Μοσχάτο - Ταύρος",
+  "Νέα Ιωνία",
+  "Νέα Σμύρνη",
+  "Νέος Ηράκλειο",
+  "Παπάγου - Χολαργός",
+  "Πειραιάς",
+  "Περιστέρι",
+  "Πετρούπολη",
+  "Φιλοθέη - Ψυχικό",
+  "Χαϊδάρι",
+  "Χαλάνδρι",
+];
 
 function calculateAge(birthDate) {
   const birthdate = new Date(birthDate);
@@ -81,13 +115,15 @@ const BabysitterProfile = ({ babysitter }) => {
 };
 
 const Search = () => {
+  const location = useLocation();
+  const initialLocation = location.state?.location || '';
   const [babysitters, setBabysitters] = useState([]);
   const [filteredBabysitters, setFilteredBabysitters] = useState([]);
   const [filters, setFilters] = useState({
     ageMin: '',
     ageMax: '',
     experienceMin: '',
-    location: '',
+    location: initialLocation,
     gender: '',
     isFlexibleWithHours: false,
     days: [],
@@ -147,7 +183,13 @@ const Search = () => {
         (filters.ageMax === '' || age <= parseInt(filters.ageMax));
       const matchesExperience = filters.experienceMin === '' || b.experience >= parseInt(filters.experienceMin);
       const matchesLocation =
-        filters.location === '' || (b.location && b.location.toLowerCase().includes(filters.location.toLowerCase()));
+  filters.location === '' ||
+  (b.location &&
+    Array.isArray(b.location) && // Βεβαιωνόμαστε ότι είναι array
+    b.location.some((loc) =>
+      loc.toLowerCase().includes(filters.location.toLowerCase())
+    ));
+
       const matchesGender = filters.gender === '' || b.gender === filters.gender;
       const matchesFlexibleHours = !filters.isFlexibleWithHours || b.availability?.isFlexibleWithHours;
       const matchesDays =
@@ -174,6 +216,14 @@ const Search = () => {
     setFilteredBabysitters(filtered);
     setPage(1);
   };
+  const handleLocationChange = (event, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      location: value || "",
+    }));
+  };
+  
+  
 
   const clearFilters = () => {
     setFilters({
@@ -244,13 +294,14 @@ const Search = () => {
               margin="normal"
               type="number"
             />
-            <TextField
-              label="Location"
-              name="location"
+            <Autocomplete
+              options={municipalitiesOfAttica}
+              freeSolo
               value={filters.location}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
+              onChange={handleLocationChange}
+              renderInput={(params) => (
+                <TextField {...params} label="Location" name="location" fullWidth margin="normal" />
+              )}
             />
             <FormControl fullWidth margin="normal">
               <InputLabel>Gender</InputLabel>
@@ -344,5 +395,4 @@ const Search = () => {
     </Container>
   );
 };
-
 export default Search;

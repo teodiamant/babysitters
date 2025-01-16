@@ -1,13 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Typography } from '@mui/material';
-import backgroundImage from './backgroundLandingPage1.jpg'; // Ensure correct relative path
+import {
+    Box,
+    Button,
+    Typography,
+    TextField,
+    Autocomplete,
+} from '@mui/material';
+import backgroundImage from './backgroundLandingPage1.jpg';
+const municipalitiesOfAttica = [
+    "Αγία Βαρβάρα",
+    "Αγία Παρασκευή",
+    "Άγιοι Ανάργυροι - Καματερό",
+    "Άγιος Δημήτριος",
+    "Αθήνα",
+    "Αιγάλεω",
+    "Αχαρνές",
+    "Βάρη - Βούλα - Βουλιαγμένη",
+    "Βύρωνας",
+    "Γαλάτσι",
+    "Γλυφάδα",
+    "Δάφνη - Υμηττός",
+    "Ελληνικό - Αργυρούπολη",
+    "Ζωγράφου",
+    "Ηλιούπολη",
+    "Ίλιον",
+    "Καλλιθέα",
+    "Κηφισιά",
+    "Μαρούσι",
+    "Μεταμόρφωση",
+    "Μοσχάτο - Ταύρος",
+    "Νέα Ιωνία",
+    "Νέα Σμύρνη",
+    "Νέος Ηράκλειο",
+    "Παπάγου - Χολαργός",
+    "Πειραιάς",
+    "Περιστέρι",
+    "Πετρούπολη",
+    "Φιλοθέη - Ψυχικό",
+    "Χαϊδάρι",
+    "Χαλάνδρι",
+];
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const [location, setLocation] = useState('');
 
     const handleButtonClick = () => {
-        navigate('/search'); // Redirect to search.jsx
+        navigate('/search', { state: { location } }); // Redirect to search.jsx
     };
 
     return (
@@ -46,6 +86,21 @@ const LandingPage = () => {
                 >
                     Welcome to Babysitters
                 </Typography>
+                <Autocomplete
+                    options={municipalitiesOfAttica}
+                    freeSolo
+                    value={location}
+                    onChange={(event, value) => setLocation(value || '')}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Search by Location"
+                            fullWidth
+                            margin="normal"
+                        />
+                    )}
+                    sx={{ mb: 4 }} // Add spacing below the input
+                />
                 <Button
                     variant="contained"
                     onClick={handleButtonClick}

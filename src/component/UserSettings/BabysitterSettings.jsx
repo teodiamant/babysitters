@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Container, TextField, Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, CircularProgress, Alert,Autocomplete, } from '@mui/material';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../config/firebase';
 import { useParams } from 'react-router-dom';
 import { doc } from 'firebase/firestore';
+
+const municipalitiesOfAttica = [
+    "Αγία Βαρβάρα", "Αγία Παρασκευή", "Άγιοι Ανάργυροι - Καματερό", "Άγιος Δημήτριος",
+    "Αθήνα", "Αιγάλεω", "Αχαρνές", "Βάρη - Βούλα - Βουλιαγμένη", "Βύρωνας",
+    "Γαλάτσι", "Γλυφάδα", "Δάφνη - Υμηττός", "Ελληνικό - Αργυρούπολη",
+    "Ζωγράφου", "Ηλιούπολη", "Ίλιον", "Καλλιθέα", "Κηφισιά", "Μαρούσι",
+    "Μεταμόρφωση", "Μοσχάτο - Ταύρος", "Νέα Ιωνία", "Νέα Σμύρνη",
+    "Νέος Ηράκλειο", "Παπάγου - Χολαργός", "Πειραιάς", "Περιστέρι",
+    "Πετρούπολη", "Φιλοθέη - Ψυχικό", "Χαϊδάρι", "Χαλάνδρι",
+];
 
 
 const BabysitterSettings = () => {
@@ -52,6 +62,13 @@ const BabysitterSettings = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+    };
+
+    const handleLocationChange = (event, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            location: value || [], // Ενημερώνει το array των περιοχών
+        }));
     };
 
     const handleFileChange = (e) => {
@@ -157,6 +174,21 @@ const BabysitterSettings = () => {
                 multiline
                 rows={4}
                 sx={{ mb: 2 }}
+            />
+            <Autocomplete
+                multiple
+                options={municipalitiesOfAttica}
+                value={formData.location}
+                onChange={handleLocationChange}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Service Locations"
+                        placeholder="Select one or more locations"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                )}
             />
             <Typography variant="body1" sx={{ mb: 1 }}>
                 Upload Profile Picture (Base64):
