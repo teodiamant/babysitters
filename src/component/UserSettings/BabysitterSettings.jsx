@@ -14,6 +14,26 @@ const municipalitiesOfAttica = [
     "Νέος Ηράκλειο", "Παπάγου - Χολαργός", "Πειραιάς", "Περιστέρι",
     "Πετρούπολη", "Φιλοθέη - Ψυχικό", "Χαϊδάρι", "Χαλάνδρι",
 ];
+const certificationsList = [
+    'Πιστοποίηση Πρώτων Βοηθειών',
+    'Πιστοποίηση CPR (για βρέφη και παιδιά)',
+    'Εκπαίδευση για Πρόληψη και Αντιμετώπιση Πνιγμού',
+    'Πιστοποίηση Βασικής Υποστήριξης Ζωής (BLS)',
+    'Εκπαίδευση για Χρήση Αυτόματου Εξωτερικού Απινιδωτή (AED)',
+    'Πιστοποίηση Ψυχολογίας Παιδιών ή Εκπαίδευσης Προσχολικής Ηλικίας',
+    'Πιστοποιημένο Σεμινάριο Babysitter (π.χ. από τον Ερυθρό Σταυρό)',
+    'Εκπαίδευση Φροντίδας Παιδιών με Ειδικές Ανάγκες',
+    'Πιστοποίηση Ασφάλειας στο Σπίτι',
+    'Πιστοποίηση Καθαρού Ποινικού Μητρώου',
+    'Πιστοποίηση Ασφάλειας Τροφίμων',
+    'Πιστοποίηση Διατροφής για Βρέφη και Παιδιά (π.χ. μπουκάλι, υποστήριξη θηλασμού)',
+    'Πιστοποίηση Κολύμβησης και Ασφάλειας στο Νερό',
+    'Δίπλωμα Οδήγησης και Πιστοποίηση Αμυντικής Οδήγησης',
+    'Εκπαίδευση Διαχείρισης Συγκρούσεων και Συμπεριφοράς',
+    'Πιστοποίηση Γλωσσικών Ικανοτήτων (αν είναι απαραίτητο)',
+    'Συστάσεις και Μαρτυρίες από προηγούμενες οικογένειες ή εργοδότες',
+    'Εμπειρία σε Ομαδική Φροντίδα (π.χ. παιδικοί σταθμοί, κατασκηνώσεις)',
+  ];
 
 
 const BabysitterSettings = () => {
@@ -68,6 +88,12 @@ const BabysitterSettings = () => {
         setFormData((prev) => ({
             ...prev,
             location: value || [], // Ενημερώνει το array των περιοχών
+        }));
+    };
+    const handlecertificationsChange = (event, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            certifications: value || [], // Ενημερώνει το array των περιοχών
         }));
     };
 
@@ -155,15 +181,20 @@ const BabysitterSettings = () => {
                 fullWidth
                 sx={{ mb: 2 }}
             />
-            <TextField
-                label="Certifications/Skills"
-                name="certifications"
+            <Autocomplete
+                multiple
+                options={certificationsList}
                 value={formData.certifications}
-                onChange={handleInputChange}
-                fullWidth
-                multiline
-                rows={3}
-                sx={{ mb: 2 }}
+                onChange={handlecertificationsChange}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Certifications/Skills"
+                        placeholder="certifications"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    />
+                )}
             />
             <TextField
                 label="Short Bio"

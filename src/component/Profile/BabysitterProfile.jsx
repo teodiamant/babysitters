@@ -26,9 +26,9 @@ import {
   DialogContent,
   DialogActions,
   Rating,
-  TextField,
-  Checkbox,
   FormControlLabel,
+  Radio,
+  RadioGroup
 } from "@mui/material";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 
@@ -515,62 +515,34 @@ const handleAvailabilitySubmit = async (e) => {
       ))}
     </Box>
     <Typography variant="h6" sx={{ mb: 2 }}>
-      Preferred Hours
+      Preferred Work Type
     </Typography>
-    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-      <TextField
-        label="Start Time"
-        name="start"
-        type="time"
-        value={formData.availability.preferredHours.start}
+    <Box sx={{ mb: 2 }}>
+      <RadioGroup
+        value={formData.availability.fullTimeOrPartTime}
         onChange={(e) =>
           setFormData((prev) => ({
             ...prev,
             availability: {
               ...prev.availability,
-              preferredHours: { ...prev.availability.preferredHours, start: e.target.value },
+              fullTimeOrPartTime: e.target.value,
             },
           }))
         }
-        InputLabelProps={{ shrink: true }}
-        fullWidth
-      />
-      <TextField
-        label="End Time"
-        name="end"
-        type="time"
-        value={formData.availability.preferredHours.end}
-        onChange={(e) =>
-          setFormData((prev) => ({
-            ...prev,
-            availability: {
-              ...prev.availability,
-              preferredHours: { ...prev.availability.preferredHours, end: e.target.value },
-            },
-          }))
-        }
-        InputLabelProps={{ shrink: true }}
-        fullWidth
-      />
-    </Box>
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={formData.availability.isFlexibleWithHours}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              availability: {
-                ...prev.availability,
-                isFlexibleWithHours: e.target.checked,
-              },
-            }))
-          }
+        row
+      >
+        <FormControlLabel
+          value="Full Time"
+          control={<Radio color="primary" />}
+          label="Full Time"
         />
-      }
-      label="Flexible Hours"
-      sx={{ mb: 2 }}
-    />
+        <FormControlLabel
+          value="Part Time"
+          control={<Radio color="primary" />}
+          label="Part Time"
+        />
+      </RadioGroup>
+    </Box>
     <Button variant="contained" type="submit" color="primary">
       Save Availability
     </Button>

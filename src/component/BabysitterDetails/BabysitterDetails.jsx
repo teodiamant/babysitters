@@ -187,75 +187,169 @@ const BabysitterDetails = () => {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={3} sx={{ p: 2 }}>
-        <Typography variant="h4" gutterBottom>
-          {babysitter.firstName} {babysitter.lastName}
-        </Typography>
-        <Typography variant="subtitle1">{babysitter.email}</Typography>
-        <img
-          src={babysitter.profilePicture || "default_image.jpg"}
-          alt="Babysitter"
-          style={{ width: "100%" }}
-        />
-        <Typography sx={{ mt: 2 }}>{babysitter.bio}</Typography>
-        <Typography sx={{ mt: 1 }}>
-          Age: {calculateAge(babysitter.birthDate)}
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          Experience: {babysitter.experience} years
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          Certifications: {babysitter.certifications}
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2, mr: 1 }}
-          onClick={handleViewChat}
-        >
-          Send Message
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          sx={{ mt: 2 }}
-          onClick={handleMakeContract}
-        >
-          Make a Contract
-        </Button>
-
-        {/* Κριτικές */}
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          backgroundColor: "#f9f9f9",
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        {/* Babysitter Info */}
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <img
+            src={babysitter.profilePicture || "default_image.jpg"}
+            alt="Babysitter"
+            style={{
+              width: 250,
+              height: 250,
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: 16,
+            }}
+          />
+          <Typography variant="h4" sx={{ fontWeight: "bold", color: "#4c3b34" }}>
+            {babysitter.firstName} {babysitter.lastName}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: "#757575", mb: 1 }}>
+            {babysitter.email}
+          </Typography>
+          
+        </Box>
+  
+        {/* Additional Details */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53" }}>
+            Age: <span style={{ color: "#4c3b34" }}>{calculateAge(babysitter.birthDate)}</span>
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
+            Experience: <span style={{ color: "#4c3b34" }}>{babysitter.experience} years</span>
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
+            {babysitter.bio}
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
+            Certifications:
+            <Box
+              component="ul"
+              sx={{
+                listStyle: "none",
+                p: 0,
+                mt: 1,
+                color: "#4c3b34",
+              }}
+            >
+              {Array.isArray(babysitter.certifications) && babysitter.certifications.length > 0 ? (
+                babysitter.certifications.map((cert, index) => (
+                  <li key={index} style={{ marginBottom: 4 }}>
+                    - {cert}
+                  </li>
+                ))
+              ) : (
+                <li>Not Specified</li>
+              )}
+            </Box>
+          </Typography>
+        </Box>
+  
+        {/* Action Buttons */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              backgroundColor: "#4c3b34",
+              "&:hover": { backgroundColor: "#795e53" },
+            }}
+            onClick={handleViewChat}
+          >
+            Send Message
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{
+              backgroundColor: "#795e53",
+              "&:hover": { backgroundColor: "#4c3b34" },
+            }}
+            onClick={handleMakeContract}
+          >
+            Make a Contract
+          </Button>
+        </Box>
+  
+        {/* Reviews Section */}
         <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" gutterBottom>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: "bold",
+              color: "#4c3b34",
+              borderBottom: "2px solid #795e53",
+              display: "inline-block",
+              mb: 2,
+            }}
+          >
             Reviews
           </Typography>
           {reviews.length > 0 ? (
             reviews.map((review) => (
-              <Paper key={review.id} elevation={2} sx={{ p: 2, mb: 2 }}>
+              <Paper
+                key={review.id}
+                elevation={2}
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <Rating value={review.rating} precision={0.5} readOnly />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      ml: 1,
+                      fontWeight: "bold",
+                      color: "#4c3b34",
+                    }}
+                  >
                     {review.rating} stars
                   </Typography>
                 </Box>
                 {review.comment && (
-                  <Typography variant="body2" color="textSecondary">
-                    {review.comment}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "#757575",
+                      fontStyle: "italic",
+                      mb: 1,
+                    }}
+                  >
+                    "{review.comment}"
                   </Typography>
                 )}
-                <Typography variant="caption" color="textSecondary">
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#b0b0b0", fontStyle: "italic" }}
+                >
                   Submitted by: {review.parentDetails.email}
                 </Typography>
               </Paper>
             ))
           ) : (
-            <Typography>No reviews yet.</Typography>
+            <Typography variant="body1" sx={{ color: "#757575", mt: 1 }}>
+              No reviews yet.
+            </Typography>
           )}
         </Box>
       </Paper>
     </Container>
   );
+  
 };
 
 export default BabysitterDetails;

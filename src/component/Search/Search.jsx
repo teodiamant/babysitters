@@ -8,8 +8,6 @@ import {
   Button,
   Typography,
   Pagination,
-  Checkbox,
-  FormControlLabel,
   Select,
   MenuItem,
   InputLabel,
@@ -53,6 +51,27 @@ const municipalitiesOfAttica = [
   "Χαϊδάρι",
   "Χαλάνδρι",
 ];
+const certificationsList = [
+  'Πιστοποίηση Πρώτων Βοηθειών',
+  'Πιστοποίηση CPR (για βρέφη και παιδιά)',
+  'Εκπαίδευση για Πρόληψη και Αντιμετώπιση Πνιγμού',
+  'Πιστοποίηση Βασικής Υποστήριξης Ζωής (BLS)',
+  'Εκπαίδευση για Χρήση Αυτόματου Εξωτερικού Απινιδωτή (AED)',
+  'Πιστοποίηση Ψυχολογίας Παιδιών ή Εκπαίδευσης Προσχολικής Ηλικίας',
+  'Πιστοποιημένο Σεμινάριο Babysitter (π.χ. από τον Ερυθρό Σταυρό)',
+  'Εκπαίδευση Φροντίδας Παιδιών με Ειδικές Ανάγκες',
+  'Πιστοποίηση Ασφάλειας στο Σπίτι',
+  'Πιστοποίηση Καθαρού Ποινικού Μητρώου',
+  'Πιστοποίηση Ασφάλειας Τροφίμων',
+  'Πιστοποίηση Διατροφής για Βρέφη και Παιδιά (π.χ. μπουκάλι, υποστήριξη θηλασμού)',
+  'Πιστοποίηση Κολύμβησης και Ασφάλειας στο Νερό',
+  'Δίπλωμα Οδήγησης και Πιστοποίηση Αμυντικής Οδήγησης',
+  'Εκπαίδευση Διαχείρισης Συγκρούσεων και Συμπεριφοράς',
+  'Πιστοποίηση Γλωσσικών Ικανοτήτων (αν είναι απαραίτητο)',
+  'Συστάσεις και Μαρτυρίες από προηγούμενες οικογένειες ή εργοδότες',
+  'Εμπειρία σε Ομαδική Φροντίδα (π.χ. παιδικοί σταθμοί, κατασκηνώσεις)',
+];
+
 
 function calculateAge(birthDate) {
   const birthdate = new Date(birthDate);
@@ -100,7 +119,10 @@ const BabysitterProfile = ({ babysitter }) => {
     <Typography variant="h6">{`${babysitter.firstName} ${babysitter.lastName}`}</Typography>
     <Typography variant="body2">Age: {calculateAge(babysitter.birthDate)}</Typography>
     <Typography variant="body2">Experience: {babysitter.experience} years</Typography>
-    <Typography variant="body2">Location: {babysitter.location}</Typography>
+    <Typography variant="body2">Job Type: {babysitter.availability.fullTimeOrPartTime }</Typography>
+    <Typography variant="body1" sx={{ mb: 1 }}>
+    Location: {Array.isArray(babysitter.location) ? babysitter.location.join(', ') : babysitter.location || 'Not Specified'}
+  </Typography>
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
       <Rating value={babysitter.rating?.average || 0} precision={0.5} readOnly />
       <Typography variant="body2" sx={{ ml: 1 }}>
@@ -124,11 +146,10 @@ const Search = () => {
     ageMax: '',
     experienceMin: '',
     location: initialLocation,
+    certifications: [],
     gender: '',
-    isFlexibleWithHours: false,
     days: [],
-    startTime: '',
-    endTime: '',
+    fullTimeOrPartTime: [],
   });
   const [sortBy, setSortBy] = useState(''); // Για ταξινόμηση
   const [page, setPage] = useState(1);
@@ -191,21 +212,28 @@ const Search = () => {
     ));
 
       const matchesGender = filters.gender === '' || b.gender === filters.gender;
-      const matchesFlexibleHours = !filters.isFlexibleWithHours || b.availability?.isFlexibleWithHours;
       const matchesDays =
         filters.days.length === 0 || filters.days.every((day) => b.availability?.days.includes(day));
-      const matchesStartTime = !filters.startTime || b.availability?.preferredHours?.start >= filters.startTime;
-      const matchesEndTime = !filters.endTime || b.availability?.preferredHours?.end <= filters.endTime;
-
+        const matchesCertifications =
+        (Array.isArray(filters.certifications) && filters.certifications.length === 0) ||
+        (Array.isArray(b.certifications) &&
+          filters.certifications.every((cert) => b.certifications.includes(cert)));  
+          const matchesFullTimeOrPartTime =
+          filters.fullTimeOrPartTime.length === 0 ||
+          (b.availability &&
+            filters.fullTimeOrPartTime.some((option) =>
+              b.availability.fullTimeOrPartTime.includes(option)
+            ));        
+      
       return (
         matchesAge &&
         matchesExperience &&
         matchesLocation &&
+        matchesCertifications&&
         matchesGender &&
-        matchesFlexibleHours &&
-        matchesDays &&
-        matchesStartTime &&
-        matchesEndTime
+        matchesFullTimeOrPartTime&&
+        matchesDays 
+
       );
     });
 
@@ -222,20 +250,25 @@ const Search = () => {
       location: value || "",
     }));
   };
+  const handlecertificationsChange = (event, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      certifications: value || "",
+    }));
+  };
   
   
-
   const clearFilters = () => {
     setFilters({
       ageMin: '',
       ageMax: '',
       experienceMin: '',
       location: '',
+      certifications:[],
       gender: '',
-      isFlexibleWithHours: false,
       days: [],
-      startTime: '',
-      endTime: '',
+      fullTimeOrPartTime: [],
+
     });
     setFilteredBabysitters(babysitters);
     setPage(1);
@@ -303,6 +336,16 @@ const Search = () => {
                 <TextField {...params} label="Location" name="location" fullWidth margin="normal" />
               )}
             />
+            <Autocomplete
+              multiple
+              options={certificationsList}
+              value={filters.certifications}
+              onChange={handlecertificationsChange}
+              renderInput={(params) => (
+                <TextField {...params} label="Certifications" name="certifications" fullWidth margin="normal" />
+              )}
+            />
+
             <FormControl fullWidth margin="normal">
               <InputLabel>Gender</InputLabel>
               <Select name="gender" value={filters.gender} onChange={handleInputChange}>
@@ -326,32 +369,25 @@ const Search = () => {
                 </Button>
               ))}
             </Box>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={filters.isFlexibleWithHours}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, isFlexibleWithHours: e.target.checked }))}
+            <Autocomplete
+              multiple
+              options={['Full Time', 'Part Time']}
+              value={filters.fullTimeOrPartTime}
+              onChange={(event, value) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  fullTimeOrPartTime: value || [],
+                }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Preferred Job Type"
+                  placeholder="Select Full Time or Part Time"
+                  fullWidth
+                  margin="normal"
                 />
-              }
-              label="Flexible Hours"
-            />
-            <TextField
-              label="Start Time"
-              name="startTime"
-              type="time"
-              value={filters.startTime}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
-            />
-            <TextField
-              label="End Time"
-              name="endTime"
-              type="time"
-              value={filters.endTime}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
+              )}
             />
             <Box sx={{ my: 2 }}>
               <FormControl fullWidth>

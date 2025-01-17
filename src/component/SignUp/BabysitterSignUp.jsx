@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, MenuItem, CircularProgress,
-        Alert, FormControlLabel, Checkbox, Tooltip,Autocomplete} from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+        Alert, FormControlLabel,Autocomplete,Radio,RadioGroup,FormControl} from '@mui/material';
+
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../config/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -41,18 +41,37 @@ const municipalitiesOfAttica = [
     "Χαϊδάρι",
     "Χαλάνδρι",
   ];
+  const certificationsList = [
+    'Πιστοποίηση Πρώτων Βοηθειών',
+    'Πιστοποίηση CPR (για βρέφη και παιδιά)',
+    'Εκπαίδευση για Πρόληψη και Αντιμετώπιση Πνιγμού',
+    'Πιστοποίηση Βασικής Υποστήριξης Ζωής (BLS)',
+    'Εκπαίδευση για Χρήση Αυτόματου Εξωτερικού Απινιδωτή (AED)',
+    'Πιστοποίηση Ψυχολογίας Παιδιών ή Εκπαίδευσης Προσχολικής Ηλικίας',
+    'Πιστοποιημένο Σεμινάριο Babysitter (π.χ. από τον Ερυθρό Σταυρό)',
+    'Εκπαίδευση Φροντίδας Παιδιών με Ειδικές Ανάγκες',
+    'Πιστοποίηση Ασφάλειας στο Σπίτι',
+    'Πιστοποίηση Καθαρού Ποινικού Μητρώου',
+    'Πιστοποίηση Ασφάλειας Τροφίμων',
+    'Πιστοποίηση Διατροφής για Βρέφη και Παιδιά (π.χ. μπουκάλι, υποστήριξη θηλασμού)',
+    'Πιστοποίηση Κολύμβησης και Ασφάλειας στο Νερό',
+    'Δίπλωμα Οδήγησης και Πιστοποίηση Αμυντικής Οδήγησης',
+    'Εκπαίδευση Διαχείρισης Συγκρούσεων και Συμπεριφοράς',
+    'Πιστοποίηση Γλωσσικών Ικανοτήτων (αν είναι απαραίτητο)',
+    'Συστάσεις και Μαρτυρίες από προηγούμενες οικογένειες ή εργοδότες',
+    'Εμπειρία σε Ομαδική Φροντίδα (π.χ. παιδικοί σταθμοί, κατασκηνώσεις)',
+  ];
 
 const BabysitterSignUp = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [isFlexible, setIsFlexible] = useState(false); // Track if babysitter is flexible
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ firstName: '', lastName: '', gender: '', birthDate: '',
-            email: '', password: '', phoneNumber: '', location: '', experience: '', certifications: '', bio: '', 
-            profilePicture: '', availability: { days: [], preferredHours: { start: '', end: '' },
-            isFlexible: false, isFlexibleWithHours: false, },});
+            email: '', password: '', phoneNumber: '', location: [], experience: '', certifications: [], bio: '', 
+            profilePicture: '', availability: { days: [],
+            fullTimeOrPartTime: ''},});
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -123,14 +142,12 @@ const BabysitterSignUp = () => {
                 phoneNumber: formData.phoneNumber,
                 location: formData.location || [],
                 experience: formData.experience,
-                certifications: formData.certifications,
+                certifications: formData.certifications || [],
                 bio: formData.bio,
                 profilePicture: formData.profilePicture,
                 availability: {
                     days: formData.availability.days,
-                    preferredHours: formData.availability.preferredHours,
-                    isFlexibleWithHours: formData.availability.isFlexibleWithHours,
-                    isFlexible: isFlexible,
+                    fullTimeOrPartTime: formData.availability.fullTimeOrPartTime,
                 },
                 createdAt: new Date(),
             };
@@ -171,7 +188,12 @@ const BabysitterSignUp = () => {
         }
     };
     
-    
+    const handleCertificationsChange = (event, value) => {
+        setFormData((prev) => ({
+          ...prev,
+          certifications: value || [], // Ενημερώνεται το πεδίο certifications
+        }));
+      };
     
 
 
@@ -257,35 +279,26 @@ const BabysitterSignUp = () => {
                     </Box>
                     <Box sx={{ mb: 2 }}>
                     <Autocomplete
-                        multiple
-                        options={municipalitiesOfAttica}
-                        freeSolo
-                        value={formData.location || []} // Παραμένει "location"
-                        onChange={(event, value) => {
-                            setFormData((prev) => ({
-                                ...prev,
-                                location: value || [], // Παραμένει "location"
-                            }));
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Preferred work locations *"
-                                placeholder="Select one or more locations"
-                                fullWidth
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <Tooltip title="Specify the locations you would like to work around">
-                                            <InfoOutlinedIcon
-                                                sx={{ color: '#795e53', cursor: 'pointer' }}
-                                            />
-                                        </Tooltip>
-                                    ),
-                                }}
-                            />
-                        )}
-                    />
+    multiple
+    options={municipalitiesOfAttica}
+    freeSolo
+    value={formData.location || []} // Παραμένει πίνακας
+    onChange={(event, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            location: value || [],
+        }));
+    }}
+    renderInput={(params) => (
+        <TextField
+            {...params}
+            label="Preferred work locations *"
+            placeholder="Select one or more locations"
+            fullWidth
+        />
+    )}
+/>
+
                 </Box>
 
                     <TextField
@@ -329,16 +342,21 @@ const BabysitterSignUp = () => {
                         fullWidth
                         sx={{ mb: 2 }}
                     />
-                    <TextField
-                        label="Certifications/Skills"
-                        name="certifications"
-                        value={formData.certifications}
-                        onChange={handleInputChange}
-                        fullWidth
-                        multiline
-                        rows={3}
-                        sx={{ mb: 2 }}
-                    />
+                    <Autocomplete
+    multiple
+    options={certificationsList}
+    value={formData.certifications || []} // Παραμένει πίνακας
+    onChange={handleCertificationsChange}
+    renderInput={(params) => (
+        <TextField
+            {...params}
+            label="Certifications"
+            placeholder="Select one or more certifications"
+            fullWidth
+        />
+    )}
+/>
+
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Availability
                     </Typography>
@@ -369,82 +387,38 @@ const BabysitterSignUp = () => {
                             </Box>
                         ))}
                     </Box>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={isFlexible}
-                                onChange={(e) => setIsFlexible(e.target.checked)}
-                            />
-                        }
-                        label="Flexible Availability"
-                        sx={{ mb: 2 }}
-                    />
+                    
 
                     {/* Preferred Hours Section */}
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        Preferred Hours
+                    Preferred Work Schedule 
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                        <TextField
-                            label="Start Time"
-                            name="start"
-                            type="time"
-                            value={formData.availability.preferredHours.start}
-                            onChange={(e) =>
-                                setFormData((prevData) => ({
-                                    ...prevData,
-                                    availability: {
-                                        ...prevData.availability,
-                                        preferredHours: {
-                                            ...prevData.availability.preferredHours,
-                                            start: e.target.value,
-                                        },
-                                    },
-                                }))
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            fullWidth
-                        />
-                        <TextField
-                            label="End Time"
-                            name="end"
-                            type="time"
-                            value={formData.availability.preferredHours.end}
-                            onChange={(e) =>
-                                setFormData((prevData) => ({
-                                    ...prevData,
-                                    availability: {
-                                        ...prevData.availability,
-                                        preferredHours: {
-                                            ...prevData.availability.preferredHours,
-                                            end: e.target.value,
-                                        },
-                                    },
-                                }))
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            fullWidth
-                        />
-                    </Box>
-
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={formData.availability.isFlexibleWithHours}
-                                onChange={(e) =>
-                                    setFormData((prevData) => ({
-                                        ...prevData,
-                                        availability: {
-                                            ...prevData.availability,
-                                            isFlexibleWithHours: e.target.checked,
-                                        },
-                                    }))
-                                }
-                            />
-                        }
-                        label="I am flexible with work hours"
-                        sx={{ mb: 2 }}
-                    />
+                    <FormControl component="fieldset">
+        <RadioGroup
+            name="fullTimeOrPartTime"
+            value={formData.availability.fullTimeOrPartTime}
+            onChange={(e) =>
+                setFormData((prev) => ({
+                    ...prev,
+                    availability: {
+                        ...prev.availability,
+                        fullTimeOrPartTime: e.target.value,
+                    },
+                }))
+            }
+        >
+            <FormControlLabel
+                value="Full Time"
+                control={<Radio />}
+                label="Full Time"
+            />
+            <FormControlLabel
+                value="Part Time"
+                control={<Radio />}
+                label="Part Time"
+            />
+        </RadioGroup>
+    </FormControl>
                 </form>
             )}
             {activeStep === 2 && (
