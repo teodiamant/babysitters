@@ -21,6 +21,7 @@ import Search from './component/Search/Search';
 import BabysitterDetails from './component/BabysitterDetails/BabysitterDetails';
 import Breadcrumbs from './component/Breadcrunbs/Breadcrumbs';
 import UsersChat from "./component/UsersChat/UsersChat";
+import Contact from './component/NavBar/Contact';
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
               <Route path="/specifications" element={<SpecificationsPage />} />
               <Route path="/parent-profile/:email" element={<ParentProfile/>} />
               <Route path="/babysitter-profile/:email" element={<BabysitterProfile />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<TermsPage />} />
               {/* If you need profiles for babysitters or parents, add routes here */}
             </Routes>
