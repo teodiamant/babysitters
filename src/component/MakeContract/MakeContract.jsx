@@ -1,13 +1,45 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box, Stepper, Step, StepLabel, CircularProgress,
-        Alert, FormControlLabel, Checkbox } from '@mui/material';
+        Alert, FormControlLabel,Radio,RadioGroup,Autocomplete } from '@mui/material';
 import { addDoc, collection,getDocs,where,query } from 'firebase/firestore'; // Εισαγωγή addDoc
 import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 
 const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile','Review'];
-
+const municipalitiesOfAttica = [
+    "Αγία Βαρβάρα",
+    "Αγία Παρασκευή",
+    "Άγιοι Ανάργυροι - Καματερό",
+    "Άγιος Δημήτριος",
+    "Αθήνα",
+    "Αιγάλεω",
+    "Αχαρνές",
+    "Βάρη - Βούλα - Βουλιαγμένη",
+    "Βύρωνας",
+    "Γαλάτσι",
+    "Γλυφάδα",
+    "Δάφνη - Υμηττός",
+    "Ελληνικό - Αργυρούπολη",
+    "Ζωγράφου",
+    "Ηλιούπολη",
+    "Ίλιον",
+    "Καλλιθέα",
+    "Κηφισιά",
+    "Μαρούσι",
+    "Μεταμόρφωση",
+    "Μοσχάτο - Ταύρος",
+    "Νέα Ιωνία",
+    "Νέα Σμύρνη",
+    "Νέος Ηράκλειο",
+    "Παπάγου - Χολαργός",
+    "Πειραιάς",
+    "Περιστέρι",
+    "Πετρούπολη",
+    "Φιλοθέη - Ψυχικό",
+    "Χαϊδάρι",
+    "Χαλάνδρι",
+  ];
 const MakeContract = () => {
     const { state } = useLocation();
     const { babysitterDetails, userDetails } = state;
@@ -16,7 +48,6 @@ const MakeContract = () => {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [isFlexible, setIsFlexible] = useState(false);
     const navigate = useNavigate();
     
     const [formData, setFormData] = useState({
@@ -30,7 +61,7 @@ const MakeContract = () => {
         numberOfChildren: '', 
         childrenAges: '', 
         specializations: '', 
-        availability: { days: [], preferredHours: { start: '', end: '' }, isFlexibleWithHours: false },
+        availability: { days: [], preferredHours: { start: '', end: '' },jobType:'' },
     });
 
     const handleInputChange = (e) => {
@@ -78,7 +109,6 @@ const MakeContract = () => {
             return null;
         }
     };
-    
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -106,8 +136,7 @@ const MakeContract = () => {
                 availability: {
                     days: formData.availability.days,
                     preferredHours: formData.availability.preferredHours,
-                    isFlexibleWithHours: formData.availability.isFlexibleWithHours,
-                    isFlexible: isFlexible,
+                    jobType: formData.availability.jobType
                 },
                 createdAt: new Date(),
                 userDetails: {
@@ -160,7 +189,22 @@ const MakeContract = () => {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                         <TextField label="Duration(months) *" name="duration" value={formData.duration} onChange={handleInputChange} fullWidth />
-                        <TextField label="City *" name="city" value={formData.city} onChange={handleInputChange} fullWidth />
+                        <Autocomplete
+                        options={municipalitiesOfAttica}
+                        freeSolo
+                        value={formData.city}
+                        fullWidth
+                        onChange={(event, value) => {
+                            setFormData((prev) => ({
+                            ...prev,
+                            city: value || '', // Ενημερώνουμε το πεδίο city με την επιλεγμένη τιμή
+                            }));
+                        }}
+                        renderInput={(params) => (
+                            <TextField {...params} label="City" name="city" fullWidth />
+                        )}
+                        />
+
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                         <TextField label="Street *" name="street" value={formData.street} onChange={handleInputChange} fullWidth />
@@ -184,13 +228,41 @@ const MakeContract = () => {
                             </Box>
                         ))}
                     </Box>
-                    <FormControlLabel control={<Checkbox checked={isFlexible} onChange={(e) => setIsFlexible(e.target.checked)} />} label="Flexible Availability" sx={{ mb: 2 }} />
+                   
                     <Typography variant="h6" sx={{ mb: 2 }}>Preferred Hours</Typography>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                         <TextField label="Start Time" name="start" type="time" value={formData.availability.preferredHours.start} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, preferredHours: { ...formData.availability.preferredHours, start: e.target.value } } })} InputLabelProps={{ shrink: true }} fullWidth />
                         <TextField label="End Time" name="end" type="time" value={formData.availability.preferredHours.end} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, preferredHours: { ...formData.availability.preferredHours, end: e.target.value } } })} InputLabelProps={{ shrink: true }} fullWidth />
                     </Box>
-                    <FormControlLabel control={<Checkbox checked={formData.availability.isFlexibleWithHours} onChange={(e) => setFormData({ ...formData, availability: { ...formData.availability, isFlexibleWithHours: e.target.checked } })} />} label="Flexible Hours" sx={{ mb: 2 }} />
+                     <Typography variant="h6" sx={{ mb: 2 }}>
+                          Preferred Work Type
+                        </Typography>
+                        <Box sx={{ mb: 2 }}>
+                          <RadioGroup
+                            value={formData.availability.jobType}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                availability: {
+                                  ...prev.availability,
+                                  jobType: e.target.value,
+                                },
+                              }))
+                            }
+                            row
+                          >
+                            <FormControlLabel
+                              value="Full Time"
+                              control={<Radio color="primary" />}
+                              label="Full Time"
+                            />
+                            <FormControlLabel
+                              value="Part Time"
+                              control={<Radio color="primary" />}
+                              label="Part Time"
+                            />
+                          </RadioGroup>
+                        </Box>
                 </form>
             )}
 

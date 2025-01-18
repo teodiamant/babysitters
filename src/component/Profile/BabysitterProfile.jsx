@@ -104,79 +104,86 @@ const BabysitterProfile = () => {
       return () => unsubscribe();
     }, [auth]);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      try {
-        const requestsRef = collection(FIREBASE_DB, "requests");
-
-        // Fetch all requests for the babysitter
-        const babysitterQuery = query(
-          requestsRef,
-          where("babysitterDetails.email", "==", email)
-        );
-        const requestsSnap = await getDocs(babysitterQuery);
-
-        if (!requestsSnap.empty) {
-          const requests = requestsSnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          setAllRequests(requests);
-
-          // Check for current job
-          const activeJob = requests.find(
-            (request) =>
-              request.state === "Accepted" &&
-              new Date(request.startDate) <= new Date()
+    useEffect(() => {
+      const fetchRequests = async () => {
+        setLoading(true);
+        try {
+          const requestsRef = collection(FIREBASE_DB, "requests");
+    
+          // Fetch all requests for the babysitter
+          const babysitterQuery = query(
+            requestsRef,
+            where("babysitterDetails.email", "==", email)
           );
-
-          setCurrentJob(activeJob || null);
-
-          // Get history requests
-          const history = requests.filter((request) => {
-            if (request.state === "Accepted") {
-              const startDate = new Date(request.startDate);
-              const durationInMonths = parseInt(request.duration || "0", 10);
-              const endDate = new Date(startDate);
-              endDate.setMonth(startDate.getMonth() + durationInMonths);
-          
-              return endDate < new Date(); // Μόνο αν έχει ολοκληρωθεί
-            }
-            return false;
-          });
-          setHistoryRequests(history);
-          
-        } else {
-          setAllRequests([]);
-          setCurrentJob(null);
-          setHistoryRequests([]);
-        }
-      } catch (err) {
-        setError("Failed to fetch requests");
-        console.error("Error fetching requests:", err);
-      }
-      setLoading(false);
-    };
-    const fetchChats = async () => {
-          try {
-            const chatsQuery = query(
-              collection(FIREBASE_DB, "chats"),
-              where("participants", "array-contains", email)
+          const requestsSnap = await getDocs(babysitterQuery);
+    
+          if (!requestsSnap.empty) {
+            const requests = requestsSnap.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+    
+            // Get history requests
+            const history = requests.filter((request) => {
+              if (request.state === "Accepted") {
+                const startDate = new Date(request.startDate);
+                const durationInMonths = parseInt(request.duration || "0", 10);
+                const endDate = new Date(startDate);
+                endDate.setMonth(startDate.getMonth() + durationInMonths);
+    
+                return endDate < new Date(); // Μόνο αν έχει ολοκληρωθεί
+              }
+              return false;
+            });
+            setHistoryRequests(history);
+    
+            // Check for current job
+            const activeJob = requests.find(
+              (request) =>
+                request.state === "Accepted" &&
+                !history.some((historyRequest) => historyRequest.id === request.id) &&
+                new Date(request.startDate) <= new Date()
             );
-            const chatsSnap = await getDocs(chatsQuery);
-      
-            setChats(chatsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-          } catch (err) {
-            console.error("Error fetching chats:", err);
+    
+            setCurrentJob(activeJob || null);
+    
+            // Filter out current job and history requests from all requests
+            const filteredRequests = requests.filter(
+              (request) =>
+                (!activeJob || request.id !== activeJob.id) &&
+                !history.some((historyRequest) => historyRequest.id === request.id)
+            );
+            setAllRequests(filteredRequests);
+          } else {
+            setAllRequests([]);
+            setCurrentJob(null);
+            setHistoryRequests([]);
           }
-        };
-      
-        fetchChats();
-    fetchRequests();
-  }, [email]);
-
+        } catch (err) {
+          setError("Failed to fetch requests");
+          console.error("Error fetching requests:", err);
+        }
+        setLoading(false);
+      };
+    
+      const fetchChats = async () => {
+        try {
+          const chatsQuery = query(
+            collection(FIREBASE_DB, "chats"),
+            where("participants", "array-contains", email)
+          );
+          const chatsSnap = await getDocs(chatsQuery);
+    
+          setChats(chatsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        } catch (err) {
+          console.error("Error fetching chats:", err);
+        }
+      };
+    
+      fetchChats();
+      fetchRequests();
+    }, [email]);
+    
   useEffect(() => {
     const fetchRatings = async () => {
       try {
@@ -798,7 +805,7 @@ const handleAvailabilitySubmit = async (e) => {
               </Typography>
               <Typography variant="body1">
                 <strong>Payment Status:</strong>{" "}
-                {request.payment === "true" ? "Accepted" : "Rejected"}
+                {request.payment}
               </Typography>
  {/* Κριτικές */}
  <Box sx={{ mt: 4 }}>
@@ -878,13 +885,10 @@ const handleAvailabilitySubmit = async (e) => {
                   : "Not specified"}
               </Typography>
               <Typography variant="body1">
-                Flexible with Hours: {selectedRequest.availability.isFlexibleWithHours ? "Yes" : "No"}
+                Job Type: {selectedRequest.availability.jobType}
               </Typography>
               <Typography variant="body1">
-                Flexible Availability: {selectedRequest.availability.isFlexible ? "Yes" : "No"}
-              </Typography>
-              <Typography variant="body1">
-                Payment Status: {selectedRequest.payment === "true" ? "Accepted" : "Rejected"}
+                Payment Status: {selectedRequest.payment}
               </Typography>
             </>
           )}

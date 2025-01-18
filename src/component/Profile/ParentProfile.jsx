@@ -110,29 +110,36 @@ const ParentProfile = () => {
       setLoading(true);
       try {
         const requestsRef = collection(FIREBASE_DB, "requests");
-
+  
         // Fetch all requests for the parent
         const parentQuery = query(
           requestsRef,
           where("userDetails.email", "==", email)
         );
         const requestsSnap = await getDocs(parentQuery);
-
+  
         if (!requestsSnap.empty) {
           const parentRequests = requestsSnap.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
-          setRequests(parentRequests);
-
+  
           // Find the current job
           const activeJob = parentRequests.find(
             (request) =>
               request.state === "Accepted" &&
-              new Date(request.startDate) <= new Date()
+              new Date(request.startDate) <= new Date() &&
+              (!request.duration || // Αν δεν υπάρχει διάρκεια
+                new Date() <=
+                  new Date(
+                    new Date(request.startDate).setMonth(
+                      new Date(request.startDate).getMonth() +
+                        parseInt(request.duration || "0", 10)
+                    )
+                  ))
           );
           setCurrentJob(activeJob || null);
-
+  
           // Find past jobs
           const completedJobs = parentRequests.filter((request) => {
             if (request.state === "Accepted") {
@@ -144,8 +151,15 @@ const ParentProfile = () => {
             }
             return false;
           });
-          
           setPastJobs(completedJobs);
+  
+          // Filter out current and past jobs from all requests
+          const filteredRequests = parentRequests.filter(
+            (request) =>
+              (!activeJob || request.id !== activeJob.id) &&
+              !completedJobs.some((completedJob) => completedJob.id === request.id)
+          );
+          setRequests(filteredRequests);
         } else {
           setRequests([]);
           setCurrentJob(null);
@@ -157,6 +171,7 @@ const ParentProfile = () => {
       }
       setLoading(false);
     };
+  
     const fetchChats = async () => {
       try {
         const chatsQuery = query(
@@ -170,9 +185,12 @@ const ParentProfile = () => {
         console.error("Error fetching chats:", err);
       }
     };
+  
     fetchChats();
     fetchRequests();
   }, [email]);
+  
+  
 
   const handleTogglePayment = async (jobId, newPaymentStatus) => {
     try {
@@ -613,9 +631,6 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
             {/* Πληροφορίες */}
             <Box sx={{ flex: 1, textAlign: "left" }}>
               <Typography variant="body1">
-                <strong>Request ID:</strong> {request.id}
-              </Typography>
-              <Typography variant="body1">
                 <strong>Status:</strong> {request.state}
               </Typography>
               <Typography variant="body1">
@@ -718,30 +733,38 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
             <strong>Duration:</strong> {job.duration} months
           </Typography>
         </Box>
-        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-  {job.payment === "Pending" ? (
-    <>
-      <Button
-        variant="contained"
-        color="success"
-        onClick={() => handleTogglePayment(job.id, "true")}
-      >
-        Accept
-      </Button>
-      <Button
-        variant="contained"
-        color="error"
-        onClick={() => handleTogglePayment(job.id, "false")}
-      >
-        Reject
-      </Button>
-    </>
-  ) : (
-    <Typography variant="body2">
-      Payment Status: {job.payment === "true" ? "Accepted" : "Rejected"}
-    </Typography>
-  )}
-</Box>
+        <Box sx={{ mt: 2 }}>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          <strong>Payment:</strong>
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          <strong>Job Type:</strong> {job.availability.jobType}
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {job.payment === "Pending" ? (
+            <>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => handleTogglePayment(job.id, "true")}
+              >
+                Accept
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => handleTogglePayment(job.id, "false")}
+              >
+                Reject
+              </Button>
+            </>
+          ) : (
+            <Typography variant="body2">
+              Payment Status: {job.payment === "true" ? "Accepted" : "Rejected"}
+            </Typography>
+          )}
+        </Box>
+      </Box>
 
         </CardContent>
 
@@ -897,10 +920,7 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
                           : "Not specified"}
                       </Typography>
                       <Typography variant="body1">
-                        Flexible with Hours: {selectedRequest.availability.isFlexibleWithHours ? "Yes" : "No"}
-                      </Typography>
-                      <Typography variant="body1">
-                        Flexible Availability: {selectedRequest.availability.isFlexible ? "Yes" : "No"}
+                        Job Type: {selectedRequest.availability.jobType}
                       </Typography>
                       <Typography variant="body1">
                         Payment Status: {selectedRequest.payment === "true" ? "Accepted" : "Rejected"}

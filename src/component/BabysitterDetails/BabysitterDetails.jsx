@@ -227,6 +227,43 @@ const BabysitterDetails = () => {
           <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
             Experience: <span style={{ color: "#4c3b34" }}>{babysitter.experience} years</span>
           </Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1, mb: 1 }}>
+            Availability:
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+            }}
+          >
+            {babysitter.availability.days && babysitter.availability.days.length > 0 ? (
+              babysitter.availability.days.map((day, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    padding: "8px 16px",
+                    borderRadius: "16px",
+                    backgroundColor: "#f3b2ac",
+                    color: "#fff",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    minWidth: "80px",
+                  }}
+                >
+                  {day}
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body2" sx={{ color: "#757575" }}>
+                Not Available
+              </Typography>
+            )}
+          </Box>
+
+          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
+            Job Type: <span style={{ color: "#4c3b34" }}>{babysitter.availability.fullTimeOrPartTime} </span>
+          </Typography>
           <Typography variant="body1" sx={{ fontWeight: "bold", color: "#795e53", mt: 1 }}>
             {babysitter.bio}
           </Typography>
