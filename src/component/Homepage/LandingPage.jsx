@@ -6,8 +6,16 @@ import {
     Typography,
     TextField,
     Autocomplete,
+    Grid,
+    Card,
+    CardContent,
+    CardMedia,
 } from '@mui/material';
 import backgroundImage from './backgroundLandingPage1.jpg';
+import step1 from '../../images/step1.png';
+import step2 from '../../images/step2.jpg';
+import step3 from '../../images/step3.png';
+
 const municipalitiesOfAttica = [
     "Αγία Βαρβάρα",
     "Αγία Παρασκευή",
@@ -116,6 +124,72 @@ const LandingPage = () => {
                 >
                     Find a Babysitter
                 </Button>
+            </Box>
+              {/* Πώς λειτουργεί το site */}
+              <Box
+                sx={{
+                    marginTop: 6,
+                    textAlign: 'center',
+                }}
+            >
+                <Typography variant="h4" sx={{ mb: 4, color: '#4c3b34' }}>
+                    How It Works
+                </Typography>
+                <Grid container spacing={4} justifyContent="center">
+                    {[
+                        {
+                            title: 'Step 1: Search',
+                            description: 'Find babysitters near your location by searching with a few clicks.',
+                            image: step1,
+                        },
+                        {
+                            title: 'Step 2: Select',
+                            description: 'Choose the babysitter that fits your needs and preferences.',
+                            image: step2,
+                        },
+                        {
+                            title: 'Step 3: Connect',
+                            description: 'Chat, set up an agreement, and start your babysitting service.',
+                            image: step3,
+                        },
+                    ].map((step, index) => (
+                        <Grid item xs={12} md={4} key={index}>
+                            <Card
+                                sx={{
+                                    boxShadow: 3,
+                                    height: '270px',
+                                    transition: 'transform 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'scale(1.05)',
+                                    },
+                                }}
+                            >
+                                <CardMedia
+                                    component="img"
+                                    height="140"
+                                    image={step.image}
+                                    alt={step.title}
+                                    sx={{
+                                        objectFit: 'contain', // Κάνει zoom out
+                                        width: '100%', // Προσαρμόζει το πλάτος
+                                        borderRadius: '4px',
+                                    }}
+                                />
+                                <CardContent>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{ fontWeight: 'bold', color: '#795e53' }}
+                                    >
+                                        {step.title}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#4c3b34' }}>
+                                        {step.description}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))}
+                </Grid>
             </Box>
         </Box>
     );
