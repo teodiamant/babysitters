@@ -11,7 +11,6 @@ import {
   doc,
   deleteDoc,
   serverTimestamp,
-  getDoc,
 } from "firebase/firestore";
 import { FIREBASE_DB } from "../../config/firebase";
 import {
@@ -190,35 +189,6 @@ const ParentProfile = () => {
     fetchRequests();
   }, [email]);
   
-  
-
-  const handleTogglePayment = async (jobId, newPaymentStatus) => {
-    try {
-      const jobRef = doc(FIREBASE_DB, "jobs", jobId);
-  
-      // Λήψη της τρέχουσας κατάστασης από τη βάση
-      const jobSnapshot = await getDoc(jobRef);
-      const jobData = jobSnapshot.data();
-  
-      if (jobData.payment === "Pending") {
-        // Ενημέρωση της κατάστασης μόνο αν είναι ακόμη "Pending"
-        await updateDoc(jobRef, { payment: newPaymentStatus });
-  
-        // Ενημέρωση του τοπικού state
-        setPastJobs((prevJobs) =>
-          prevJobs.map((job) =>
-            job.id === jobId ? { ...job, payment: newPaymentStatus } : job
-          )
-        );
-      } else {
-        console.warn("Payment status can only be changed once when it is 'Pending'.");
-      }
-    } catch (error) {
-      console.error("Failed to update payment status:", error);
-    }
-  };
-  
-
   const handleRatingSubmit = async (job, rating, comment) => {
     if (!job.babysitterDetails.email || !job.userDetails.email || !job.id) {
         return;
@@ -456,7 +426,26 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     console.error("Error starting chat:", error);
   }
 };
+const handleTogglePayment = async (jobId, newPaymentStatus) => {
+  try {
+    // Δημιουργία αναφοράς στο έγγραφο
+    const jobRef = doc(FIREBASE_DB, "jobs", jobId);
 
+    // Ενημέρωση του πεδίου 'payment' στο Firestore
+    await updateDoc(jobRef, { payment: newPaymentStatus });
+
+    // Ενημέρωση του τοπικού state
+    setPastJobs((prevJobs) =>
+      prevJobs.map((job) =>
+        job.id === jobId ? { ...job, payment: newPaymentStatus } : job
+      )
+    );
+
+    console.log(`Payment successfully updated to '${newPaymentStatus}' for job ID: ${jobId}`);
+  } catch (error) {
+    console.error("Error updating payment:", error.message);
+  }
+};
 
   if (loading) {
     return <Typography>Loading...</Typography>;
@@ -746,21 +735,21 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
               <Button
                 variant="contained"
                 color="success"
-                onClick={() => handleTogglePayment(job.id, "true")}
+                onClick={() => handleTogglePayment(job.id, "Accepted")}
               >
                 Accept
               </Button>
               <Button
                 variant="contained"
                 color="error"
-                onClick={() => handleTogglePayment(job.id, "false")}
+                onClick={() => handleTogglePayment(job.id, "Rejected")}
               >
                 Reject
               </Button>
             </>
           ) : (
             <Typography variant="body2">
-              Payment Status: {job.payment === "true" ? "Accepted" : "Rejected"}
+              Payment Status: {job.payment}
             </Typography>
           )}
         </Box>

@@ -637,7 +637,7 @@ const handleAvailabilitySubmit = async (e) => {
                         <strong>Start Date:</strong> {new Date(currentJob.startDate).toLocaleDateString()}
                       </Typography>
                       <Typography variant="body1">
-                        <strong>Payment Status:</strong> {currentJob.payment === "true" ? "Accepted" : "Rejected"}
+                        <strong>Payment Status:</strong> {currentJob.payment }
                       </Typography>
                       <Typography variant="body1">
                         <strong>Days:</strong> {currentJob.availability.days.join(", ")}
