@@ -7,14 +7,8 @@ import {
     TextField,
     Autocomplete,
     Grid,
-    Card,
-    CardContent,
-    CardMedia,
 } from '@mui/material';
 import backgroundImage from './backgroundLandingPage1.jpg';
-import step1 from '../../images/step1.png';
-import step2 from '../../images/step2.jpg';
-import step3 from '../../images/step3.png';
 
 const municipalitiesOfAttica = [
     "Αγία Βαρβάρα",
@@ -65,7 +59,7 @@ const LandingPage = () => {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '100vh', // Full viewport height
+                height: '100vh',
                 margin: -2.5,
                 padding: 0,
                 boxSizing: 'border-box',
@@ -77,11 +71,11 @@ const LandingPage = () => {
         >
             <Box
                 sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent overlay
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
                     padding: '20px',
                     borderRadius: '10px',
                     textAlign: 'center',
-                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)', // Shadow for depth
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)',
                 }}
             >
                 <Typography
@@ -107,7 +101,7 @@ const LandingPage = () => {
                             margin="normal"
                         />
                     )}
-                    sx={{ mb: 4 }} // Add spacing below the input
+                    sx={{ mb: 4 }}
                 />
                 <Button
                     variant="contained"
@@ -125,68 +119,98 @@ const LandingPage = () => {
                     Find a Babysitter
                 </Button>
             </Box>
-              {/* Πώς λειτουργεί το site */}
-              <Box
+
+            <Box
                 sx={{
                     marginTop: 6,
                     textAlign: 'center',
+                    position: 'relative',
                 }}
             >
-                <Typography variant="h4" sx={{ mb: 4, color: '#4c3b34' }}>
-                    How It Works
-                </Typography>
-                <Grid container spacing={4} justifyContent="center">
-                    {[
+                <Grid container spacing={4} alignItems="center" justifyContent="center">
+                    <Grid item xs={2} md={2} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        {/* Rectangle for How It Works */}
+                        <Box
+                            sx={{
+                                color: '#4c3b34',
+                                backgroundColor: '#d5caac',
+                                flexDirection: 'column',
+                                height: 50,
+                                width: 500,
+                                padding: '16px',
+                                borderRadius: '5px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: 3,
+                                fontSize: '1.2rem',
+                                fontWeight: 'bold',
+                                textAlign: 'center',
+                                position: 'relative',
+                            }}
+                        >
+                            How It Works
+                        </Box>
+                        {/* Line connecting How It Works to Step 1 */}
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                right: '25px',
+                                left: '5%',
+                                width: '250px',
+                                height: '1.5mm',
+                                backgroundColor: '#d5caac',
+                            }}
+                        />
+                    </Grid>
+
+                    {[ // Steps with circle format
                         {
-                            title: 'Step 1: Search',
-                            description: 'Find babysitters near your location by searching with a few clicks.',
-                            image: step1,
+                            title: 'Step 1: Search for a Babysitter near you', 
                         },
                         {
-                            title: 'Step 2: Select',
-                            description: 'Choose the babysitter that fits your needs and preferences.',
-                            image: step2,
+                            title: 'Step 2: Select using your preferences',
                         },
                         {
-                            title: 'Step 3: Connect',
-                            description: 'Chat, set up an agreement, and start your babysitting service.',
-                            image: step3,
+                            title: 'Step 3: Connect,Chat and Book smoothly',
                         },
                     ].map((step, index) => (
-                        <Grid item xs={12} md={4} key={index}>
-                            <Card
+                        <Grid item xs={3} md={3} key={index} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <Box
                                 sx={{
-                                    boxShadow: 3,
-                                    height: '270px',
-                                    transition: 'transform 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'scale(1.05)',
-                                    },
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: '#d5caac',
+                                    width: 130,
+                                    height: 130,
+                                    borderRadius: '50%',
+                                    color: '#4c3b34',
+                                    fontWeight: 'bold',
+                                    fontSize: '1rem',
+                                    position: 'relative',
                                 }}
                             >
-                                <CardMedia
-                                    component="img"
-                                    height="140"
-                                    image={step.image}
-                                    alt={step.title}
-                                    sx={{
-                                        objectFit: 'contain', // Κάνει zoom out
-                                        width: '100%', // Προσαρμόζει το πλάτος
-                                        borderRadius: '4px',
-                                    }}
-                                />
-                                <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: 'bold', color: '#795e53' }}
-                                    >
-                                        {step.title}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: '#4c3b34' }}>
-                                        {step.description}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
+                                {step.title}
+                                {/* Line connecting Steps */}
+                                {index < 2 && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            right: '25px',
+                                            left: '100%',
+                                            width: '150px',
+                                            height: '1.5mm',
+                                            backgroundColor: '#d5caac',
+                                            transfrom: 'translateY(50%)',
+                                        }}
+                                    />
+                                )}
+                            </Box>
                         </Grid>
                     ))}
                 </Grid>

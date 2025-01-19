@@ -27,8 +27,6 @@ const SignUpLandingPage = () => {
                 backgroundColor: '#f9f9f9',
                 minHeight: '100vh',
                 display: 'flex',
-                //margin: -2.5,
-                paddingTop: '50px',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -104,6 +102,16 @@ const SignUpLandingPage = () => {
                     </Grid>
                 ))}
             </Grid>
+
+            {/* Already Signed Up Section */}
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="body1">
+                    Already Signed Up?{' '}
+                    <Link href="/login" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        Sign In
+                    </Link>
+                </Typography>
+            </Box>
         </Box>
     );
 };

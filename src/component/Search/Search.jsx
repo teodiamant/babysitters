@@ -237,7 +237,7 @@ const Search = () => {
       );
     });
 
-    if (sortBy === 'score') {
+    if (sortBy === 'Rating') {
       filtered = filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
     }
 
