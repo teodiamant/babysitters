@@ -13,23 +13,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { FIREBASE_DB } from "../../config/firebase";
-import {
-  Container,
-  Grid,
-  Typography,
-  Button,
-  Box,
-  Card,
-  CardContent,
-  Avatar,
-  Paper,
-  TextField,
-  Rating,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
+import { Container, Grid, Typography, Button, Box, Card, CardContent, Avatar, Paper,
+        TextField, Rating, Dialog, DialogTitle, DialogContent, DialogActions, } from "@mui/material";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 
 
@@ -735,9 +720,9 @@ const handleTogglePayment = async (jobId, newPaymentStatus) => {
               <Button
                 variant="contained"
                 color="success"
-                onClick={() => handleTogglePayment(job.id, "Accepted")}
+                onClick={() => handleTogglePayment(job.id, "Payment Completed")}
               >
-                Accept
+                Confirm
               </Button>
               <Button
                 variant="contained"
