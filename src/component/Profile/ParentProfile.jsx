@@ -411,22 +411,22 @@ const handleViewChat = async (parentEmail, babysitterEmail) => {
     console.error("Error starting chat:", error);
   }
 };
-const handleTogglePayment = async (jobId, newPaymentStatus) => {
+const handleTogglePayment = async (requestId, newPaymentStatus) => {
   try {
     // Δημιουργία αναφοράς στο έγγραφο
-    const jobRef = doc(FIREBASE_DB, "jobs", jobId);
+    const requestRef = doc(FIREBASE_DB, "requests", requestId);
 
     // Ενημέρωση του πεδίου 'payment' στο Firestore
-    await updateDoc(jobRef, { payment: newPaymentStatus });
+    await updateDoc(requestRef, { payment: newPaymentStatus });
 
     // Ενημέρωση του τοπικού state
     setPastJobs((prevJobs) =>
       prevJobs.map((job) =>
-        job.id === jobId ? { ...job, payment: newPaymentStatus } : job
+        job.id === requestId ? { ...job, payment: newPaymentStatus } : job
       )
     );
 
-    console.log(`Payment successfully updated to '${newPaymentStatus}' for job ID: ${jobId}`);
+    console.log(`Payment successfully updated to '${newPaymentStatus}' for request ID: ${requestId}`);
   } catch (error) {
     console.error("Error updating payment:", error.message);
   }
