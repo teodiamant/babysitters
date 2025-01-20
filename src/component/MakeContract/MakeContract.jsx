@@ -6,7 +6,7 @@ import { FIREBASE_DB } from '../../config/firebase'; // Firebase σύνδεση
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 
-const steps = ['Personal Details', 'Child & Days Specifications', 'Setup Profile','Review'];
+const steps = ['Personal Details', 'Child & Days Specifications', 'Further Information','Review'];
 const municipalitiesOfAttica = [
     "Αγία Βαρβάρα",
     "Αγία Παρασκευή",
