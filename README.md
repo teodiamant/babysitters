@@ -1,83 +1,75 @@
+# Babysitters (Neighborhood Nannies)
 
-#### Ομάδα Υλοποίησης:
-- **Ονόματα Μελών Ομάδας:** 
-
-    Ιωάννης Προδρομίδης      1115202200153
-
-    Θεόδωρος Διαμαντόπουλος  1115201800266
+An integrated platform designed to bridge the gap between parents/guardians and professional childcare providers. This project provides a streamlined interface for finding, scheduling, and paying for childcare services through a secure digital environment.
 
 ---
 
-#### Περιγραφή Έργου:
-Σκοπός της εργασίας είναι η υλοποίηση ενός ιστοχώρου με τίτλο **"Νταντάδες της γειτονιάς"**, που παρέχει υπηρεσίες σύνδεσης γονέων/κηδεμόνων με επαγγελματίες φύλαξης παιδιών. Η πλατφόρμα προσφέρει εξατομικευμένη πληροφόρηση και λειτουργικότητα τόσο για τους γονείς όσο και για τις/τους επαγγελματίες, το όνομα της ιστοσελίδας μας είναι **"Babysitters"**
+## 👥 Implementation Team
+- **Ioannis Prodromidis** (ID: 1115202200153)
+- **Theodoros Diamantopoulos** (ID: 1115201800266)
 
 ---
 
-#### Υλοποιημένες Λειτουργίες:
-
-##### **Για τους Γονείς/Κηδεμόνες:**
-1. **Αρχική Σελίδα:**
-   - Οδηγίες χρήσης και Εύρεση νταντάς βάση τοποθεσίας(χωρίς να χρειάζεται login).
-2. **Αναζήτηση Επαγγελματιών:**
-   - Φίλτρα αναζήτησης όπως περιοχή, ηλικία,  διαθεσιμότητα, φύλο, εμπειρία, πιστοποιήσεθς καθώς και δυνατότητα ταξινόμησης.
-3. **Διαχείριση Δηλώσεων Συνεργασίας:**
-   - Αποθήκευση, υποβολή, και επεξεργασία δηλώσεων ενδιαφέροντος.
-4. **Προγραμματισμός Ραντεβού:**
-   - Δυνατότητα επικοινωνίας μέσω chat της εφαρμογής για προγραμματισμό διαδικτυακών ή δια ζώσης ραντεβού.
-5. **Πληρωμή Επαγγελματιών:**
-   - Ψηφιακά vouchers και επιβεβαίωση πληρωμών.
-6. **Λήξη Συνεργασίας:**
-   - Διαδικασία αξιολόγησης και δυνατότητα ανανέωσης συμφωνίας.
-
-##### **Για τις/τους Επαγγελματίες (Νταντάδες):**
-1. **Είσοδος στον ιστοχώρο:**
-   - Οδηγίες χρήσης, έχει την δυνατότητα να δει(χωρίς login) τα profile άλλων νταντάδων.
-1. **Δημιουργία Προφίλ:**
-   - Περιλαμβάνει στοιχεία όπως όνομα, ηλικία, εμπειρία, σπουδές και συστατικές επιστολές.
-2. **Δημιουργία Αγγελίας:**
-   - Υποβολή πληροφοριών και δυνατότητα ανανέωσηςγια διαθεσιμότητα και τοποθεσία εργασίας.
-3. **Προγραμματισμός Ραντεβού:**
-   - Δυνατότητα chat με ενδιαφερόμενους γονείς για προγραμματισμό ραντεβού και συνεργασιας.
-4. **Πληρωμή μέσω Voucher:**
-   - Λήψη και επιβεβαίωση πληρωμών.
-5. **Προβολή Ιστορικού:**
-   - Παρακολούθηση αιτήσεων, συμφωνιών, πληρωμών και αξιολογήσεων.
+## 📝 Project Description
+The **"Babysitters"** platform (titled "Neighborhood Nannies") serves as a specialized marketplace for childcare. It offers personalized functionalities for two distinct user roles: **Parents** seeking reliable care and **Professionals** offering their services.
 
 ---
 
-#### Τεχνολογίες:
-1. **Frontend:** React με Material UI.
-2. **Backend:** node_modules
-3. **Βάση Δεδομένων:** Firebase / MongoDB / Άλλη επιλογή.
-4. **Πλατφόρμα Ανάπτυξης:** Visual Studio Code
+## ✨ Implemented Features
+
+### For Parents/Guardians
+* **Landing Page:** Access to usage instructions and location-based nanny discovery without requiring an account.
+* **Advanced Search:** Filter professionals by region, age, availability, gender, experience, and certifications.
+* **Application Management:** Save, edit, and submit formal declarations of interest/cooperation.
+* **Communication:** Integrated chat system for scheduling virtual or in-person interviews.
+* **Secure Payments:** Support for digital vouchers and payment confirmation.
+* **Feedback Loop:** Post-cooperation evaluation system and agreement renewal options.
+
+### For Professionals (Nannies)
+* **Discovery:** Browse other professional profiles and platform guidelines without logging in.
+* **Profile Building:** Detailed CV creation including education, experience, and recommendation letters.
+* **Job Posting:** Create and update ads regarding work location and real-time availability.
+* **Management Dashboard:** Comprehensive history of applications, active agreements, payments, and reviews.
+* **Voucher Processing:** Direct receipt and confirmation of digital payments.
 
 ---
 
-#### Οδηγίες Εκτέλεσης:
-1. Κατεβάστε τα αρχεία του project από το(ιδιωτικό) 
-https://github.com/teodiamant/babysitters.
-2. Εκτελέστε `npm install` για την εγκατάσταση των απαραίτητων εξαρτήσεων.
-3. Χρησιμοποιήστε `npm start` για να τρέξετε την εφαρμογή σε τοπικό περιβάλλον.
-4. Βεβαιωθείτε ότι η βάση δεδομένων είναι σωστά συνδεδεμένη πριν από τη χρήση.
+## 🛠 Tech Stack
+* **Frontend:** [React](https://reactjs.org/) with [Material UI](https://mui.com/)
+* **Backend:** Node.js
+* **Database:** Firebase / MongoDB
+* **Editor:** Visual Studio Code
 
 ---
 
-#### Δοκιμαστικοί Κωδικοί:
-- **Γονέας/Κηδεμόνας:**
-  - Χρήστης: parent@gmail.com
-  - Κωδικός: 123456
-- **Επαγγελματίας:**
-  - Χρήστης: nanny@gmail.com
-  - Κωδικός: 123456
+## 🚀 Getting Started
+
+### Prerequisites
+* Node.js installed on your machine.
+* Access to the private repository.
+
+### Installation & Execution
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/teodiamant/babysitters](https://github.com/teodiamant/babysitters)
+---
+
+#### Testing Accounts:
+- **Parent/Guardian:**
+  - Username: parent@gmail.com
+  - Password: 123456
+- **Babysitter:**
+  - Username: nanny@gmail.com
+  - Password: 123456
 
 ---
 
-#### Σύνδεσμος(ιδιωτικού) Αποθετηρίου:
+#### Github URL:
 (https://github.com/teodiamant/babysitters)
 
 ---
 
-#### Σημειώσεις:
-- Το παραδοτέο περιλαμβάνει μόνο τους φακέλους `src` και `public` χωρίς τον φάκελο `node_modules`, καθώς επίσης τα `package-lock.json`, `package.json` και το `.gitignore`.
-- Για τυχόν απορίες ή δυσλειτουργίες, επικοινωνήστε με τον υπεύθυνο της ομάδας.
+#### Notes:
+* The deliverable includes only the `src` and `public` folders (excluding `node_modules`), as well as the `package-lock.json`, `package.json`, and `.gitignore` files.
+* For any questions or malfunctions, please contact the team leader.
 
